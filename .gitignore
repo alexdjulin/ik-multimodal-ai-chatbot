@@ -154,13 +154,17 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-# Rnd notebooks
-project_notes.ipynb
-project_RnD.ipynb
+# Notebooks
+*.ipynb
+Notebooks/
 
 # folders
 medias/
 downloads/
+RnD/
+chroma_db/
+csv/
+logs/
 
 # extensions
 *.env
