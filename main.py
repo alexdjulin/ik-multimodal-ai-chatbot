@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 """
 Filename: main.py
-Description: Starting point for the AI chatbot defining the command line arguments and starting a new chat.
+Description: Starting point for the AI Librarian defining the command line arguments
+and starting a new chat.
 Author: @alexdjulin
-Date: 2024-07-25
+Date: 2024-11-02
 """
 
 import argparse
@@ -36,7 +37,7 @@ if __name__ == '__main__':
     from ai_librarian import AiLibrarian
     avatar = AiLibrarian()
 
-    # initialise a worker agent (uncomment only one of the following)
+    # initialise main agent
     avatar.create_worker_agent()
 
     # start chat

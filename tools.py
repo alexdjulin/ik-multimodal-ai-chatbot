@@ -14,7 +14,7 @@ from pathlib import Path
 from pydantic import Field
 import html
 # custom modules
-import helpers
+import models
 import database
 # langchain
 from langchain_core.tools import tool
@@ -35,17 +35,41 @@ LOG = get_logger(Path(__file__).stem)
 
 
 # Wikipedia ----------------------------------------------------------------------------------------
-wikipedia = WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper(top_k_results=3, doc_content_chars_max=2500))
+def search_wikipedia(query: str) -> str:
+    """Retrieve information from Wikipedia based on a search query.
+
+    Args:
+        query (str): The search query to look for on Wikipedia
+
+    Returns:
+        str: The summary of the Wikipedia page with relevant information.
+    """
+
+    api_wrapper=WikipediaAPIWrapper(
+        top_k_results=1,
+        doc_content_chars_max=1000000  # full page content
+    )
+    doc = api_wrapper.load(query)[0]
+
+    # summarize the content relevant to the query
+    doc_summarized = models.summarizer(context=doc.page_content, query=query)
+    return doc_summarized
+
 
 wikipedia_search_tool = Tool(
     name="search_wikipedia",
     description="""
+    Retrieve information from Wikipedia based on a search query.
     Never search for more than one concept at a single step.
-    If you need to compare two concepts, search for each one individually.
-    Summarize your search result in 2 or 3 sentences.
-    Syntax: string with a simple concept.
+    If you need to compare multiple concepts, search for each one individually.
+    The response is already a summary of the Wikipedia page with relevant information.
+    The query syntax should be the name of the book, a mention of the support and the
+    information you want to know about the book.
+    ## Query Examples:
+    "Journey To The Center Of The Earth, Book, Plot"
+    "The Great Gatsby, Novel, Main Characters"
     """,
-    func=wikipedia.run
+    func=search_wikipedia
 )
 
 
@@ -115,13 +139,13 @@ class YoutubeSearchTool(BaseTool):
                 "description": video['snippet']['description'],
                 "video_link": f"https://www.youtube.com/watch?v={video['id']['videoId']}"
             }
-            # Get transcript header if available
+            # Get transcript and summarize information relevant to query
             try:
                 transcript = YouTubeTranscriptApi.get_transcript(video_data['video_id'], languages=['en'])
                 transcript_text = ''.join([entry['text'] for entry in transcript])
                 transcript_text = transcript_text.replace('\n', ' ')
                 if len(transcript_text) > MAX_TRANSCRIPT_LENGTH:
-                    transcript_text = helpers.summarizer(transcript_text, q)
+                    transcript_text = models.summarizer(transcript_text, q)
                 video_data['transcript_summary'] = transcript_text
 
             except Exception as e:

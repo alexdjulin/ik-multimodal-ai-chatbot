@@ -9,9 +9,9 @@ Date: 2024-07-25
 
 import os
 from pathlib import Path
-import re
 from time import sleep
-import helpers as helpers
+import helpers
+import models
 import keyboard
 import threading
 from langchain_core.messages import HumanMessage, AIMessage
@@ -67,14 +67,12 @@ class AiLibrarian:
         # langchain worker agent
         self.worker = None
 
-    def create_worker_agent(self, placeholders: list[str] = None) -> None:
-        ''' Create langchain agent
-
-        Args:
-            placeholders (list[str]): optional list of placeholder variables added to the prompt
+    def create_worker_agent(self) -> None:
+        '''
+        Create langchain agent
         '''
 
-        self.worker = helpers.build_agent(placeholders)
+        self.worker = models.llm_agent()
 
     def chat_with_avatar(self, input_method: str = None, language: str = None) -> None:
         '''Entry point to chat with the avatar.

@@ -10,7 +10,6 @@ Date: 2024-07-25
 
 import os
 from pathlib import Path
-import sys
 import csv
 import json
 from datetime import datetime
@@ -24,14 +23,6 @@ from pydub import AudioSegment
 from pydub.playback import play
 # STT
 import speech_recognition as sr
-# langchain
-from langchain_core.prompts import ChatPromptTemplate
-from langchain.agents import AgentExecutor, create_tool_calling_agent
-from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
-from langchain.docstore.document import Document
-from langchain.memory import ConversationBufferWindowMemory
 # config loader
 from config_loader import get_config
 config = get_config()
@@ -135,104 +126,6 @@ def load_prompt_messages(prompt_filepath: str = None) -> list[tuple[str, str]]:
                 continue
 
     return messages
-
-
-def load_openai() -> ChatOpenAI:
-    ''' Loads a gpt model and returns it.
-
-    Return:
-        (ChatOpenAI): the gpt model instance
-    '''
-
-    model = ChatOpenAI(
-        model=config['generative_model'],
-        api_key=os.environ['OPENAI_API_KEY'],
-        temperature=config['openai_temperature']
-    )
-
-    return model
-
-
-def build_agent(placeholders: list[str] = None) -> AgentExecutor:
-    ''' Defines a langchain agent with access to a list of tools to perform a task.
-
-    Args:
-        placeholders (list): optional list of placeholder variables added to the prompt
-
-    Return:
-        (AgentExecutor): the agent instance
-    '''
-
-    # import tools module
-    try:
-        sys.path.append(os.path.dirname(config['tools_filepath']))
-        import tools
-
-    except ImportError as e:
-        LOG.error(f"Error importing tools module: {e}. Add a tool-")
-        raise
-
-    # load llm
-    llm = load_openai()
-
-    # create prompt
-    messages = load_prompt_messages()
-
-    # add default placeholders
-    messages.append(("placeholder", "{chat_history}"))
-    messages.append(("human", "{input}"))
-    messages.append(("placeholder", "{agent_scratchpad}"))
-
-    # add custom placeholders
-    if placeholders:
-        for placeholder in placeholders:
-            messages.append(("placeholder", "{" + placeholder + "}"))
-
-    # create prompt
-    prompt = ChatPromptTemplate.from_messages(messages)
-
-    # create langchain agent
-    agent = create_tool_calling_agent(
-        tools=tools.agent_tools,
-        llm=llm,
-        prompt=prompt
-    )
-
-    memory = ConversationBufferWindowMemory(memory_key='chat_history', return_messages=True)
-
-    agent_executor = AgentExecutor(
-        agent=agent,
-        tools=tools.agent_tools,
-        verbose=config['agent_verbose'],
-        handle_parsing_errors=True,
-        memory=memory
-    )
-
-    return agent_executor
-
-
-def summarizer(context: str, input: str = None) -> str:
-    """Summarize a text using a summarizer model.
-
-    Args:
-        context (str): text to summarize
-        input (str, optional): input question to orientate the summary. Defaults to None.
-
-    Returns:
-        str: summary of the text
-    """
-
-    prompt_text = "Write a concise summary of the following text:\n{context}\nto help answer the following question:\n{input}"
-
-    prompt = ChatPromptTemplate.from_messages(
-        [("system", prompt_text),]
-    )
-
-    llm = ChatOpenAI(temperature=0, model_name=config["summarizer_model"], api_key=os.getenv("OPENAI_API_KEY"))
-
-    chain = create_stuff_documents_chain(llm, prompt)
-    document = Document(page_content=context)
-    return chain.invoke({"context": [document], "input": input})
 
 
 def generate_tts(text: str, language: str = None) -> None:
