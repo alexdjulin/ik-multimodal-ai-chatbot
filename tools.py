@@ -15,12 +15,11 @@ from pydantic import Field
 import html
 # custom modules
 import models
-import database
+import vector_db
 # langchain
 from langchain_core.tools import tool
 from langchain.agents import Tool
 from langchain_community.document_loaders import YoutubeLoader
-from langchain_community.tools import WikipediaQueryRun
 from langchain_community.utilities import WikipediaAPIWrapper
 from langchain.tools.base import BaseTool
 from googleapiclient.discovery import build
@@ -45,15 +44,24 @@ def search_wikipedia(query: str) -> str:
         str: The summary of the Wikipedia page with relevant information.
     """
 
-    api_wrapper=WikipediaAPIWrapper(
+    api_wrapper = WikipediaAPIWrapper(
         top_k_results=1,
         doc_content_chars_max=1000000  # full page content
     )
     doc = api_wrapper.load(query)[0]
 
     # summarize the content relevant to the query
-    doc_summarized = models.summarizer(context=doc.page_content, query=query)
-    return doc_summarized
+    text_summarized = models.summarizer(context=doc.page_content, query=query)
+
+    # store the summarized content in the database
+    metadata = {
+        "query": query,
+        "source": "wikipedia",
+    }
+
+    vector_db.add_to_collection(query, text_summarized, collection_name="book_info", metadata=metadata)
+
+    return text_summarized
 
 
 wikipedia_search_tool = Tool(
@@ -79,6 +87,78 @@ YT_SERVICE_NAME = "youtube"
 YT_API_VERSION = "v3"
 MAX_RESULTS = 3
 MAX_TRANSCRIPT_LENGTH = 500
+_youtube_client = None
+
+
+def get_youtube_client() -> object:
+    """Return the YouTube client to access the API, creates a new one if it doesn't exist.
+
+    Returns:
+        object: The YouTube client object.
+    """
+    global _youtube_client
+
+    if _youtube_client is None:
+        _youtube_client = build(
+            serviceName=YT_SERVICE_NAME,
+            version=YT_API_VERSION,
+            developerKey=os.environ.get('google_api_key', '')
+        )
+
+    return _youtube_client
+
+
+def search_youtube(query: str, max_results: int = MAX_RESULTS) -> list:
+    """Search for videos on YouTube based on a query.
+
+    Args:
+        query (str): The search query to look for on YouTube (video id, url, title, etc.).
+        max_results (int, optional): Max results to return. Defaults to MAX_RESULTS.
+
+    Returns:
+        list: A list of video results with metadata.
+    """
+
+    # get client
+    client = get_youtube_client()
+
+    # search for videos
+    search_response = client.search().list(
+        q=query,
+        part="id,snippet",
+        order='relevance',
+        type='video',
+        maxResults=max_results
+    ).execute()
+
+    return search_response.get('items', [])
+
+
+def filter_metadata(metadata: dict) -> dict:
+    """Filter metadata to remove unnecessary fields.
+
+    Args:
+        metadata (dict): the video metadata returned by the YouTube API
+
+    Returns:
+        dict: the filtered metadata
+    """
+
+    try:
+        filtered_metadata = {
+            "video_id": metadata['id']['videoId'],
+            "title": metadata['snippet']['title'],
+            "description": metadata['snippet']['description'],
+            "channel": metadata['snippet']['channelTitle'],
+            "thumbnail": metadata['snippet']['thumbnails']['high']['url'],
+            "video_link": f"https://www.youtube.com/watch?v={metadata['id']['videoId']}"
+        }
+
+    except Exception as e:
+        LOG.error(f"Error filtering metadata: {e}")
+        return metadata
+
+    return filtered_metadata
 
 
 class YoutubeSearchTool(BaseTool):
@@ -102,50 +182,47 @@ class YoutubeSearchTool(BaseTool):
         - video_link: Formatted as https://www.youtube.com/watch?v={video_id}
     """
 
-    def __init__(self, youtube_api_key: str = None, *args, **kwargs):
-        youtube_api_key = youtube_api_key or os.environ.get('google_api_key', '')
-        if not youtube_api_key:
+    def __init__(self, *args, **kwargs):
+        youtube_api_key = os.environ.get('google_api_key', '')
+        if not os.environ.get('google_api_key', ''):
             raise ValueError("A valid Youtube developer key must be provided.")
         kwargs["youtube_api_key"] = youtube_api_key
         super().__init__(*args, **kwargs)
 
-    def _run(self, q: str, max_results: int = MAX_RESULTS) -> str:
+    def _run(self, query: str, max_results: int = MAX_RESULTS) -> str:
+        """Use the YoutubeSearchTool.
+
+        Args:
+            query (str): The search term to look for on YouTube.
+            max_results (int, optional): The maximum number of results to return. Defaults to MAX_RESULTS.
+
+        Returns:
+            str: The search results in JSON format.
+        """
 
         LOG.debug("Tool call: YoutubeSearchTool")
 
-        # build youtube client
-        client = build(
-            serviceName=YT_SERVICE_NAME,
-            version=YT_API_VERSION,
-            developerKey=self.youtube_api_key
-        )
-
         # search for videos
-        search_response = client.search().list(
-            q=q,
-            part="id,snippet",
-            order='relevance',
-            type='video',
-            maxResults=max_results
-        ).execute()
+        search_response = search_youtube(query, max_results)
 
         # extract relevant video data
         video_list = []
 
-        for video in search_response.get('items', []):
-            video_data = {
-                "video_id": video['id']['videoId'],
-                "title": video['snippet']['title'],
-                "description": video['snippet']['description'],
-                "video_link": f"https://www.youtube.com/watch?v={video['id']['videoId']}"
-            }
-            # Get transcript and summarize information relevant to query
+        for video in search_response:
+            video_data = filter_metadata(video)
+            video_data['query'] = query  # for similarity matching
             try:
+                # Get transcript and summarize information relevant to query
                 transcript = YouTubeTranscriptApi.get_transcript(video_data['video_id'], languages=['en'])
                 transcript_text = ''.join([entry['text'] for entry in transcript])
                 transcript_text = transcript_text.replace('\n', ' ')
                 if len(transcript_text) > MAX_TRANSCRIPT_LENGTH:
-                    transcript_text = models.summarizer(transcript_text, q)
+                    transcript_text = models.summarizer(transcript_text, query)
+
+                # store the transcript in the database
+                vector_db.add_to_collection(transcript_text, collection_name="book_reviews", metadata=video_data)
+
+                # add transcript summary to video data
                 video_data['transcript_summary'] = transcript_text
 
             except Exception as e:
@@ -154,12 +231,20 @@ class YoutubeSearchTool(BaseTool):
 
             video_list.append(video_data)
 
-        # Convert to JSON format and return
+        # Convert to JSON format and return string
         results = html.unescape(json.dumps(video_list, indent=4, ensure_ascii=False))
         return results
 
     async def _arun(self, q: str, max_results: int = MAX_RESULTS) -> str:
-        """Use the YoutubeSearchTool asynchronously."""
+        """Use the YoutubeSearchTool asynchronously.
+
+        Args:
+            q (str): The search term to look for on YouTube.
+            max_results (int, optional): The maximum number of results to return. Defaults to MAX_RESULTS.
+
+        Returns:
+            str: The search results in JSON format.
+        """
         return self._run(q, max_results)
 
 
@@ -168,13 +253,25 @@ youtube_search_tool = YoutubeSearchTool()
 
 
 @tool
-def retrieve_youtube_transcript_from_url(youtube_url, ) -> str:
-    """Retrieve the transcript of a YouTube video as Documents given its URL."""
-    LOG.debug("Tool call: youtube_search_tool")
+def retrieve_youtube_transcript_from_url(youtube_url) -> str:
+    """Retrieve the full transcript of a YouTube video given its URL."""
 
+    LOG.debug("Tool call: retrieve_youtube_transcript_from_url")
+
+    # retrieve full transcript
     loader = YoutubeLoader.from_youtube_url(youtube_url, add_video_info=False)
     docs = loader.load()[0]
-    return docs.page_content
+    transcript_text = docs.page_content
+
+    # get video metadata
+    video = search_youtube(youtube_url, max_results=1)
+    metadata = filter_metadata(video[0]) if video else {}
+
+    # store a summary of the transcript in the database
+    transcript_summary = models.summarizer(context=transcript_text)
+    vector_db.add_to_collection(transcript_summary, collection_name="book_reviews", metadata=metadata)
+
+    return transcript_text
 
 
 # Database tools -----------------------------------------------------------------------------------
@@ -182,14 +279,14 @@ def retrieve_youtube_transcript_from_url(youtube_url, ) -> str:
 def search_database_for_book_information(query_text: str) -> list:
     """Search the database for book information (title, author, plot, release year, anectodes, etc.)."""
     LOG.debug("Tool call: search_database_for_book_information")
-    return database.search_collection(query_text, collection_name="book_info")
+    return vector_db.search_collection(query_text, collection_name="book_info")
 
 
 @tool
 def search_database_for_book_reviews(query_text: str) -> list:
     """Search the database for book reviews (youtuber reviews, blog posts, etc.)."""
     LOG.debug("Tool call: search_database_for_book_reviews")
-    return database.search_collection(query_text, collection_name="book_reviews")
+    return vector_db.search_collection(query_text, collection_name="book_reviews")
 
 
 # Custom tools -------------------------------------------------------------------------------------
@@ -230,10 +327,10 @@ def get_information_about_yourself() -> None:
 
 # List of tools avalaible to the agent -------------------------------------------------------------
 agent_tools = [
-    youtube_search_tool,
-    retrieve_youtube_transcript_from_url,
-    wikipedia_search_tool,
-    get_information_about_yourself,
     search_database_for_book_information,
     search_database_for_book_reviews,
+    wikipedia_search_tool,
+    youtube_search_tool,
+    retrieve_youtube_transcript_from_url,
+    get_information_about_yourself,
 ]

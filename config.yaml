@@ -29,9 +29,14 @@ agent_verbose: true  # print agent activity logs
 ## We use the following model and settings to summarize documents
 summarizer_model: gpt-3.5-turbo-0125  # the model to use for summarization
 
-# DATABASE SETTINGS
-db_path: chroma_db/  # local path to the database file
+# CHROMADB VECTORSTORE SETTINGS
+chromadb_path: chroma_db/  # local path to the database file
 embedding_model: all-MiniLM-L6-v2  # the model to use for embedding text
+add_similarity_threshold: 0.4  # the similarity threshold when adding a document to the database (higher values are more restrictive)
+search_similarity_threshold: 0.5  # distance threshold for searching the database (smaller values are more restrictive)
+
+# SQLITE TRANSCRIPTS DATABASE SETTINGS
+transcripts_db: sqlite_db/transcripts.db  # local path to the sqlite database file for storing transcripts
 
 # EDGE TTS SETTINGS
 ## We use Microsoft Edge Text-to-Speech API

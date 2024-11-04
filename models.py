@@ -71,41 +71,7 @@ def llm_agent() -> AgentExecutor:
     return agent_executor
 
 
-# def summarizer(context: str) -> str:
-#     """Summarize a text into a few sentences.
-
-#     Args:
-#         context (str): text to summarize
-
-#     Returns:
-#         str: summary of the text
-#     """
-
-#     prompt_text = """
-#     Write a concise summary of the following context in a few sentences.
-#     Return a single string with the summary.
-#     Don't include the context in the response.
-#     Don't return lists or bullet points, just a single string.
-#     ## Context:
-#     {context}
-#     """
-
-#     prompt = ChatPromptTemplate.from_messages(
-#         [("system", prompt_text),]
-#     )
-
-#     llm = ChatOpenAI(
-#         temperature=0,
-#         model_name=config["summarizer_model"],
-#         api_key=os.getenv("OPENAI_API_KEY")
-#     )
-
-#     chain = create_stuff_documents_chain(llm, prompt)
-#     document = Document(page_content=context)
-#     return chain.invoke({"context": [document]})
-
-
-def summarizer(context: str, query: str) -> str:
+def summarizer(context: str, query: str = None) -> str:
     """Extract and summarize information from a given context relevant to the query.
 
     Args:
@@ -118,6 +84,7 @@ def summarizer(context: str, query: str) -> str:
 
     prompt_text = """
     Given the following context and query, extract and summarize all relevant information.
+    If no query is provided, summarize the entire context.
     Return a single string with the extracted information.
     Don't include the context or query in the response.
     Don't return lists or bullet points, just a single string.
