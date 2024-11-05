@@ -1,6 +1,6 @@
 # USER SETTINGS
 ## How the user should interact with the avatar
-user_name: Me  # the name of the user as written to Terminal and chat history
+user_name: Alex  # the name of the user as written to Terminal and chat history
 # Chose between 3 chat input methods (can be overriden by argparse):
 ## text: type text in the terminal, get text answers
 ## voice: speak to the microphone, get voice answers

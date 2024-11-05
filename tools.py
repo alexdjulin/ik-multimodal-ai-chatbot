@@ -59,7 +59,7 @@ def search_wikipedia(query: str) -> str:
         "source": "wikipedia",
     }
 
-    vector_db.add_to_collection(query, text_summarized, collection_name="book_info", metadata=metadata)
+    vector_db.add_to_collection(text_summarized, collection_name="book_info", metadata=metadata)
 
     return text_summarized
 
@@ -309,9 +309,13 @@ def retrieve_youtube_transcript_from_url(youtube_url: str) -> str:
     LOG.debug("Tool call: retrieve_youtube_transcript_from_url")
 
     # retrieve full transcript
-    loader = YoutubeLoader.from_youtube_url(youtube_url, add_video_info=False)
-    docs = loader.load()[0]
-    transcript_text = docs.page_content.replace('\n', ' ')
+    try:
+        loader = YoutubeLoader.from_youtube_url(youtube_url, add_video_info=False)
+        docs = loader.load()[0]
+        transcript_text = docs.page_content.replace('\n', ' ')
+    except Exception as e:
+        LOG.error(f"Error retrieving transcript: {e}")
+        return "The transcript is not available for this youtube video."
 
     # get video metadata
     video = search_youtube(youtube_url, max_results=1)

@@ -8,6 +8,7 @@ Author: @alexdjulin
 Date: 2024-11-02
 """
 
+import sys
 import argparse
 from config_loader import load_config
 # load api keys from .env file
@@ -33,12 +34,14 @@ if __name__ == '__main__':
     # load config file
     load_config(config_file)
 
-    # create avatar instance
-    from ai_librarian import AiLibrarian
-    avatar = AiLibrarian()
+    try:
+        # Create avatar instance and agent
+        from ai_librarian import AiLibrarian
+        avatar = AiLibrarian()
+        avatar.create_worker_agent()
+        # Initiate chat
+        avatar.chat_with_avatar(input_method, language)
 
-    # initialise main agent
-    avatar.create_worker_agent()
-
-    # start chat
-    avatar.chat_with_avatar(input_method, language)
+    except Exception as e:
+        print(f"Error occurred in command line mode: {e}", file=sys.stderr)
+        sys.exit(1)
