@@ -1,21 +1,28 @@
 # USER SETTINGS
 ## How the user should interact with the avatar
 user_name: Alex  # the name of the user as written to Terminal and chat history
-# Chose between 3 chat input methods (can be overriden by argparse):
-## text: type text in the terminal, get text answers
-## voice: speak to the microphone, get voice answers
-## voice_k: hold and release keyboard spacebar to speak, get voice answers (recommended in a noisy environment)
-input_method: text  # specify default input method for chatbot
-# Chose default language to converse with the avatar (can be overriden by argparse).
-## This setting is ignored in input text mode.
-chat_language: en-US
-user_color: B_I_CYAN  # the color of the user's text in the terminal (see terminal_colors module)
 
 # AVATAR SETTINGS
 ## Information about the AI bot
 chatbot_name: Alice  # the name of the avatar as written to Terminal and chat history
 ai_color: B_I_MAGENTA  # the color of the avatar's text in the terminal (see terminal_colors module)
 llm_model: openai  # the LLM-family to use (openai or mistral, models are defined below)
+
+# COMMAND LINE MODE
+# Chose between 3 chat input methods (can be overriden by argparse):
+## text: type text in the terminal, get text answers
+## voice: speak to the microphone, get voice answers
+## voice_k: hold and release keyboard spacebar to speak, get voice answers (recommended in a noisy environment)
+input_method: text  # specify default input method for chatbot
+user_color: B_I_CYAN  # the color of the user's text in the terminal (see terminal_colors module)
+
+# WEB UI MODE
+## Audio filepaths should be relative to the static folder
+user_webm_filepath: static/audio/user_message.webm  # local path where to save the temporary webm audio file
+user_wav_filepath: static/audio/user_message.wav  # local path where to save the converted wav file
+chatbot_audio_filepath: static/audio/chatbot_answer.wav  # local path where to save the chatbot's audio answer
+thinking_message: ...thinking...  # the message to display while the chatbot is thinking
+processing_message: ...processing...  # the message to display while the chatbot is processing the user's input
 
 # AGENT SETTINGS
 ## We use the following settings to shape Alice's responses
@@ -56,6 +63,8 @@ tts_pitch: +0Hz  # the pitch of speech in Hz
 
 # SPEECH RECOGNITION SETTINGS
 ## We use Google Speech Recognition API to recognize the user's speech
+chat_language: en-US  # Chose default language to converse with the avatar (can be overriden by argparse).
+## In command-line mode only
 speech_timeout: 10  # how many seconds to wait for the user to speak before timing out
 phrase_time_out: 10  # how many seconds to wait for the user to resume talking after a pause (increase the latency)
 

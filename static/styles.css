@@ -70,6 +70,24 @@ button:hover {
     background-color: #45a049;
 }
 
+button#talk-button {
+    padding: 10px 20px;
+    background-color: #2196F3; /* Orange color */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 10px; /* Space between buttons */
+}
+
+button#talk-button:hover {
+    background-color: #1875c1; /* Darker orange */
+}
+
+button#talk-button:active {
+    background-color: #d91b1b; /* Darker orange */
+}
+
 .name-user {
     color: #2196F3;
 }

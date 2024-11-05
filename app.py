@@ -1,42 +1,27 @@
-# load api-keys to environment
-from dotenv import load_dotenv
-load_dotenv()
-# import flask and socketio
-from flask import Flask, render_template, request, redirect, url_for
-from flask_socketio import SocketIO
-from threading import Thread
-# config loader
+# config loader (put on top as config is needed in most modules)
 from config_loader import load_config
 config = load_config('config.yaml')
+# load api-keys to environment
+import os
+from dotenv import load_dotenv
+load_dotenv()
+# import custom modules
+import helpers
+# import flask and socketio
+from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask_socketio import SocketIO
+from threading import Thread
+from pydub import AudioSegment
 # create avatar instance
 from ai_librarian_app import AiLibrarian
 avatar = AiLibrarian()
 avatar.create_worker_agent()
-# magic strings
-USER_NAME = config['user_name']
-CHATBOT_NAME = config['chatbot_name']
-TEMP_MESSAGE = '...thinking...'
 
 
 # initialize Flask app, SocketIO and chat_history
 app = Flask(__name__)
 socketio = SocketIO(app)
 chat_history = []
-
-
-def process_answer(user_message):
-    chatbot_answer = avatar.generate_model_answer(user_message)
-
-    # Remove temporary message
-    if chat_history and chat_history[-1]["message"] == TEMP_MESSAGE:
-        chat_history.pop()
-
-    # Add chatbot answer to chat history
-    if chatbot_answer:
-        chat_history.append({"sender": CHATBOT_NAME, "message": chatbot_answer})
-
-    # Send the updated chat history to the client
-    socketio.emit("update_chat", {"chat_history": chat_history})
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -48,19 +33,101 @@ def index():
         if not user_message.strip():
             return redirect(url_for("index"))
 
-        chat_history.append({"sender": USER_NAME, "message": user_message})
+        chat_history.append({"sender": config['user_name'], "message": user_message})
 
         # process answer on a background thread
-        thread = Thread(target=process_answer, args=(user_message,))
+        thread = Thread(target=process_text_answer, args=(user_message,))
         thread.start()
 
         # add temporary message from chatbot
-        chat_history.append({"sender": CHATBOT_NAME, "message": TEMP_MESSAGE})
+        chat_history.append({"sender": config['chatbot_name'], "message": config['thinking_message']})
 
         return redirect(url_for("index"))
 
     return render_template("index.html", chat_history=chat_history)
 
 
+@app.route("/process_audio", methods=["POST"])
+def process_audio_input():
+    """Endpoint to handle audio upload and processing."""
+    if 'audio' not in request.files:
+        return jsonify({"error": "No audio file provided"}), 400
+
+    audio_file = request.files['audio']
+    webm_path = config['user_webm_filepath']
+    audio_file.save(webm_path)
+
+    # convert audio file to wav format
+    wav_path = config['user_wav_filepath']
+    wav_file = AudioSegment.from_file(webm_path, format="webm")
+    wav_file.export(wav_path, format="wav")
+
+    # add temporary message from user
+    chat_history.append({"sender": config['user_name'], "message": config['processing_message']})
+
+    # Start the transcription thread
+    thread = Thread(target=process_audio_message, args=(wav_path,))
+    thread.start()
+
+    return jsonify({"status": "Processing started"}), 200
+
+
+def process_text_answer(user_message: str) -> str:
+    chatbot_answer = avatar.generate_model_answer(user_message)
+
+    # Remove temporary message
+    if chat_history and chat_history[-1]["message"] == config['thinking_message']:
+        chat_history.pop()
+
+    # Add chatbot answer to chat history
+    if chatbot_answer:
+        chat_history.append({"sender": config['chatbot_name'], "message": chatbot_answer})
+
+    # Send the updated chat history to the client
+    socketio.emit("update_chat", {"chat_history": chat_history})
+
+    return chatbot_answer
+
+
+def process_audio_message(audio_path: str) -> None:
+    """Thread 1: Transcribe audio and update chatbox with user message."""
+
+    # transcribe audio file into a text message
+    user_message = helpers.transcribe_audio_file(audio_path)
+
+    if user_message:
+        # Remove temporary message
+        if chat_history and chat_history[-1]["message"] == config['processing_message']:
+            chat_history.pop()
+        # update chat history with user message and add temporary message from chatbot
+        chat_history.append({"sender": config['user_name'], "message": user_message})
+        chat_history.append({"sender": config['chatbot_name'], "message": config['thinking_message']})
+        socketio.emit("update_chat", {"chat_history": chat_history})
+        # Start the agent response process in a new thread
+        thread = Thread(target=process_audio_answer, args=(user_message,))
+        thread.start()
+
+
+def process_audio_answer(user_message):
+    """Thread 2: Send user text to agent, generate response, and update chatbox."""
+    chatbot_answer = avatar.generate_model_answer(user_message)
+
+    # Generate and play audio for Alice's response
+    if chatbot_answer:
+        audio_path = helpers.generate_audio_from_text(chatbot_answer)
+        # Remove temporary message
+        if chat_history and chat_history[-1]["message"] == config['thinking_message']:
+            chat_history.pop()
+        socketio.emit("new_audio_response", {"message": chatbot_answer, "audio_path": audio_path})
+
+
 if __name__ == "__main__":
     socketio.run(app, debug=True)
+
+    # clear chat history
+    chat_history.clear()
+
+    # delete temp audio files
+    for file in [config['user_webm_filepath'], config['user_wav_filepath'], config['chatbot_audio_filepath']]:
+        if os.path.exists(file):
+            os.remove(file)

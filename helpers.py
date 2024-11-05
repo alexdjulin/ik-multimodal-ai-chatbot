@@ -232,3 +232,88 @@ def record_audio_message(exit_chat: dict, input_method: str, language: str) -> s
         sleep(0.5)
 
     return None
+
+
+def transcribe_audio_file(audio_file_path: str, language: str = None) -> str | None:
+    ''' Transcribe an audio file and return text transcription.
+
+    Args:
+        audio_file_path (str): Path to the audio file to be transcribed.
+        language (str): Language to use for transcription. Default to None.
+
+    Return:
+        (str | None): Transcribed text from the audio file.
+
+    Raises:
+        RequestError: If there is an error connecting to the Google API.
+        Exception: If there is an error transcribing the audio.
+    '''
+    recognizer = sr.Recognizer()
+    if language is None:
+        language = config['chat_language']
+
+    try:
+        # Load the audio file
+        with sr.AudioFile(audio_file_path) as source:
+            LOG.debug("loading and processing audio")
+            audio = recognizer.record(source)
+
+        # Transcribe the audio file
+        LOG.debug("transcribing audio to text")
+        text = recognizer.recognize_google(audio, language=language)
+
+        if not text:
+            raise sr.UnknownValueError
+
+        return text.capitalize()
+
+    except sr.RequestError as e:
+        LOG.debug(f"Error connecting to Google API: {e}")
+
+    except Exception as e:
+        LOG.debug(f"Error transcribing audio: {e}")
+
+
+def generate_audio_from_text(text: str, language: str = None) -> str:
+    ''' Generates an audio file from an input text and returns its path.
+
+    Args:
+        text (str): text to generate audio from
+        language (str): the language to use for the voice. Default to None.
+
+    Return:
+        (str): Path to the generated audio file.
+
+    Raises:
+        Exception: if error generating audio from text.
+    '''
+
+    print('TRANSCRIBING AUDIO')
+    if language is None:
+        language = config['chat_language']
+
+    voice = config['edgetts_voices'][language]
+    audio_filepath = config['chatbot_audio_filepath']
+    os.makedirs(Path(audio_filepath).parent, exist_ok=True)
+
+    async def text_to_audio() -> None:
+        """ Generate speech from text and save it to a file """
+        communicate = edge_tts.Communicate(
+            text=text,
+            voice=voice,
+            rate=config['tts_rate'],
+            volume=config['tts_volume'],
+            pitch=config['tts_pitch']
+        )
+
+        await communicate.save(audio_filepath)
+
+    # generate audio data
+    try:
+        asyncio.run(text_to_audio())
+
+    except Exception as e:
+        LOG.error(f"Error generating audio: {e}.")
+        return
+
+    return audio_filepath

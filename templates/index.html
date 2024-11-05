@@ -27,28 +27,14 @@
             <form id="chat-form" method="post" action="{{ url_for('index') }}" style="width: 100%;">
                 <input type="text" id="user_input" name="user_input" placeholder="Talk to Alice..." autocomplete="off" autofocus>
                 <button type="submit" id="send-button">Send</button>
+                <button type="button" id="talk-button">Talk</button>
             </form>
         </div>
     </div>
 
     <!-- Include Socket.IO -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
-    <script>
-        var socket = io();
-    
-        // Listen for new responses from the server
-        socket.on('update_chat', function(data) {
-            var chatHistory = document.querySelector('.chat-history');
-            chatHistory.innerHTML = '';  // Clear current chat history
-    
-            // Append each message to the chat history
-            data.chat_history.forEach(function(message) {
-                var nameClass = message.sender === 'Alice' ? 'name-chatbot' : 'name-user';
-                chatHistory.innerHTML += `<p><strong class="${nameClass}">${message.sender}:</strong> ${message.message}</p>`;
-            });
-    
-            chatHistory.scrollTop = chatHistory.scrollHeight; // Scroll to the bottom to see the latest message
-        });
-    </script>
+    <!-- Include external JavaScript -->
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
 </body>
 </html>

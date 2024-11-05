@@ -165,6 +165,7 @@ RnD/
 chroma_db/
 csv/
 logs/
+static/audio/
 
 # extensions
 *.env
@@ -173,3 +174,4 @@ logs/
 *.mp4
 *.wav
 *.mp3
+*.webm
