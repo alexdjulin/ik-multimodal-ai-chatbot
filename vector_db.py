@@ -162,7 +162,7 @@ def add_to_collection(text: str, collection_name: str, metadata: dict) -> None:
         LOG.error(f"Collection name {collection_name} not found.")
         return
 
-    # document relevance similarity check if query is provided
+    # Dont add the document if it does not meet the similarity threshold (irrelevant to query)
     if 'query' in metadata:
         similarity = relevance_grader(text, metadata['query'])
         if similarity < config['add_similarity_threshold']:

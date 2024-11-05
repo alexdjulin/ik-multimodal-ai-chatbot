@@ -19,15 +19,16 @@ llm_model: openai  # the LLM-family to use (openai or mistral, models are define
 
 # AGENT SETTINGS
 ## We use the following settings to shape Alice's responses
-generative_model: gpt-4o  # the OpenAI model to use
+generative_model: gpt-4o-mini  # the OpenAI model to use
 openai_temperature: 1.2  # the temperature of the model (higher values make the model more creative)
 prompt_filepath: prompt.jsonl  # local path to jsonl file with prompts to use for the chatbot
 tools_filepath: tools.py  # local path to python module tools.py defining the tools available to the langchain agent (if used)
 agent_verbose: true  # print agent activity logs
 
-# SUMMARIZER SETTINGS
+# ADDITONAL MODELS SETTINGS
 ## We use the following model and settings to summarize documents
-summarizer_model: gpt-3.5-turbo-0125  # the model to use for summarization
+summarizer_model: gpt-4o-mini  # the model to use for summarization
+relevance_grader_model: gpt-4o-mini  # the model to use for grading relevance
 
 # CHROMADB VECTORSTORE SETTINGS
 chromadb_path: chroma_db/  # local path to the database file

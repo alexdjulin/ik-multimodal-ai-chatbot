@@ -85,7 +85,8 @@ def summarizer(context: str, query: str = None) -> str:
     prompt_text = """
     Given the following context and query, extract and summarize all relevant information.
     If no query is provided, summarize the entire context.
-    Return a single string with the extracted information.
+    Return a single string with the extracted information in a few sentences.
+    Make sure you don't omit any important details of the video.
     Don't include the context or query in the response.
     Don't return lists or bullet points, just a single string.
 
@@ -101,10 +102,54 @@ def summarizer(context: str, query: str = None) -> str:
 
     llm = ChatOpenAI(
         temperature=0,
-        model_name='gpt-3.5-turbo-0125',
+        model_name=config['summarizer_model'],
         api_key=os.getenv("OPENAI_API_KEY")
     )
 
     chain = create_stuff_documents_chain(llm, prompt)
     document = Document(page_content=context)
     return chain.invoke({"context": [document], "query": query})
+
+
+def relevance_grader(title: str, description: str) -> bool:
+    """Rate the relevance of a youtube video title and description to decide if it is a book
+    review or summary.
+
+    Args:
+        title (str): youtube video title
+        description (str): youtube video description
+
+    Returns:
+        bool: True if the video is relevant, False otherwise
+
+    Raises:
+        ValueError: if the relevance cannot be determined
+    """
+
+    prompt_text = """
+    Given the following youtube video title and descripion, rate the relevance of the video to a
+    book review, summary, discussion, analysis or anything related to literature.
+    Rate the relevance on a scale from 1 to 5, where 1 is not relevant and 5 is very relevant.
+    Only return a single number between 1 and 5, do not add any additional text.
+
+    {context}
+    """
+
+    prompt = ChatPromptTemplate.from_messages(
+        [("system", prompt_text),]
+    )
+
+    llm = ChatOpenAI(
+        temperature=0,
+        model_name=config['relevance_grader_model'],
+        api_key=os.getenv("OPENAI_API_KEY")
+    )
+
+    chain = create_stuff_documents_chain(llm, prompt)
+    document = Document(page_content=f"Title: {title}\nDescription: {description}")
+    grade = chain.invoke({"context": [document]})
+
+    try:
+        return int(grade) > 3
+    except ValueError:
+        return False

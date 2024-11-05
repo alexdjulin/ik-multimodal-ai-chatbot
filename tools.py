@@ -161,6 +161,43 @@ def filter_metadata(metadata: dict) -> dict:
     return filtered_metadata
 
 
+def get_video_summary_from_id(collection_name: str, video_id: str) -> dict | None:
+    """Query the ChromaDB collection for a transcript summary based on the video ID in the metadata.
+
+    Args:
+        collection_name (str): The name of the collection to query.
+        video_id (str): The video ID to search for.
+
+    Returns:
+        dict | None: The result of the query or None if not found.
+
+    Raises:
+        KeyError: If the summary is not found in the metadata.
+    """
+
+    # get client
+    chroma_client = vector_db.get_chroma_client()
+
+    # get collection
+    for collection in chroma_client.list_collections():
+        if collection.name == collection_name:
+            break
+    else:
+        LOG.error(f"Collection name {collection_name} not found.")
+        return None
+
+    # get all documents
+    all_docs = collection.get(include=['documents', 'metadatas'])
+
+    # search for video ID in metadata and return summary if found
+    for metadata in all_docs['metadatas']:
+        metadata_video_id = metadata.get('video_id', None)
+        metadata_summary = metadata.get('summary', None)
+        if metadata_video_id == video_id and metadata_summary:
+            return metadata_summary
+    return None
+
+
 class YoutubeSearchTool(BaseTool):
     """Tool that fetches search results from YouTube."""
 
@@ -209,27 +246,32 @@ class YoutubeSearchTool(BaseTool):
         video_list = []
 
         for video in search_response:
-            video_data = filter_metadata(video)
-            video_data['query'] = query  # for similarity matching
+            metadata = filter_metadata(video)
+            metadata['query'] = query  # for similarity matching
             try:
                 # Get transcript and summarize information relevant to query
-                transcript = YouTubeTranscriptApi.get_transcript(video_data['video_id'], languages=['en'])
+                transcript = YouTubeTranscriptApi.get_transcript(metadata['video_id'], languages=['en'])
                 transcript_text = ''.join([entry['text'] for entry in transcript])
                 transcript_text = transcript_text.replace('\n', ' ')
                 if len(transcript_text) > MAX_TRANSCRIPT_LENGTH:
-                    transcript_text = models.summarizer(transcript_text, query)
-
-                # store the transcript in the database
-                vector_db.add_to_collection(transcript_text, collection_name="book_reviews", metadata=video_data)
-
-                # add transcript summary to video data
-                video_data['transcript_summary'] = transcript_text
+                    # fetch summary from database if exists, otherwise summarize and store in database
+                    summary = get_video_summary_from_id('book_reviews', metadata['video_id'])
+                    if not summary:
+                        LOG.debug('Summary not found, generating a new one and storing it in the database.')
+                        summary = models.summarizer(context=transcript_text, query=query)
+                        metadata['summary'] = summary
+                        vector_db.add_to_collection(summary, collection_name="book_reviews", metadata=metadata)
+                    else:
+                        LOG.debug('Summary fetched from the database.')
+                        metadata['summary'] = summary
+                else:
+                    metadata['summary'] = transcript_text
 
             except Exception as e:
-                LOG.error(f"Error getting transcript for video {video_data['video_id']}: {e}")
-                video_data['transcript_summary'] = "Transcript not available"
+                LOG.error(f"Error getting transcript for video {metadata['video_id']}: {e}")
+                metadata['transcript_summary'] = "Transcript not available"
 
-            video_list.append(video_data)
+            video_list.append(metadata)
 
         # Convert to JSON format and return string
         results = html.unescape(json.dumps(video_list, indent=4, ensure_ascii=False))
@@ -253,23 +295,45 @@ youtube_search_tool = YoutubeSearchTool()
 
 
 @tool
-def retrieve_youtube_transcript_from_url(youtube_url) -> str:
-    """Retrieve the full transcript of a YouTube video given its URL."""
+def retrieve_youtube_transcript_from_url(youtube_url: str) -> str:
+    """Retrieve the full transcript of a YouTube video given its URL.
+    Also generated a summary and stores it in the database if not exists.
+
+    Args:
+        youtube_url (str): The URL of the YouTube video.
+
+    Return:
+        str: The full transcript of the YouTube video.
+    """
 
     LOG.debug("Tool call: retrieve_youtube_transcript_from_url")
 
     # retrieve full transcript
     loader = YoutubeLoader.from_youtube_url(youtube_url, add_video_info=False)
     docs = loader.load()[0]
-    transcript_text = docs.page_content
+    transcript_text = docs.page_content.replace('\n', ' ')
 
     # get video metadata
     video = search_youtube(youtube_url, max_results=1)
     metadata = filter_metadata(video[0]) if video else {}
 
-    # store a summary of the transcript in the database
-    transcript_summary = models.summarizer(context=transcript_text)
-    vector_db.add_to_collection(transcript_summary, collection_name="book_reviews", metadata=metadata)
+    # relevance check if the video is about litterature
+    if not models.relevance_grader(title=metadata['title'], description=metadata['description']):
+        LOG.debug("Video is not relevant to literature, skipping transcript processing.")
+        return "This video is not relevant to literature."
+
+    # fetch summary from database if exists, otherwise summarize and store in database
+    summary = get_video_summary_from_id('book_reviews', metadata['video_id'])
+
+    if not summary:
+        # store transcript summary in the database if not exists
+        LOG.debug('Summary not found, generating a new one and storing it in the database.')
+        summary = models.summarizer(context=transcript_text)
+        metadata['summary'] = summary
+        vector_db.add_to_collection(summary, collection_name="book_reviews", metadata=metadata)
+    else:
+        LOG.debug('Summary fetched from the database.')
+        print(summary)
 
     return transcript_text
 
