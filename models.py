@@ -9,7 +9,8 @@ Date: 2024-11-02
 """
 
 import os
-import helpers
+import json
+from pathlib import Path
 import tools
 # langchain
 from langchain_openai import ChatOpenAI
@@ -21,6 +22,41 @@ from langchain.memory import ConversationBufferWindowMemory
 # config loader
 from config_loader import get_config
 config = get_config()
+
+
+def load_prompt_messages(prompt_filepath: str = None) -> list[tuple[str, str]]:
+    ''' Loads messages from a jsonl file and returns them as a list of tuples.
+
+    Args:
+        prompt_filepath (str): path to jsonl file. Default to None.
+
+    Return:
+        (list[tuple[str, str]]): list of tuples with role and content
+    '''
+
+    # load prompt file from config if not provided
+    if prompt_filepath is None:
+        # concatenate current path with prompt file path
+        prompt_filepath = os.path.join(Path(__file__).parent, config['prompt_filepath'])
+
+    # check if prompt file exists
+    if not os.path.exists(prompt_filepath):
+        return []
+
+    messages = []
+
+    # Open and read the file line by line
+    with open(prompt_filepath, 'r', encoding='utf-8') as f:
+        for line in f:
+            try:
+                message = json.loads(line)  # Parse JSON only once
+                # Ensure both 'role' and 'content' are present before appending
+                if 'role' in message and 'content' in message:
+                    messages.append((message['role'], message['content']))
+            except json.JSONDecodeError:
+                continue
+
+    return messages
 
 
 def llm_agent() -> AgentExecutor:
@@ -38,7 +74,7 @@ def llm_agent() -> AgentExecutor:
     )
 
     # create prompt
-    messages = helpers.load_prompt_messages()
+    messages = load_prompt_messages()
 
     # add default placeholders
     messages.append(("placeholder", "{chat_history}"))

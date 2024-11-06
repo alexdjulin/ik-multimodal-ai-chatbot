@@ -1,20 +1,12 @@
 # USER SETTINGS
 ## How the user should interact with the avatar
 user_name: Alex  # the name of the user as written to Terminal and chat history
+user_color: r"\033[96m"  # (CYAN) the color of the user's text in the terminal
 
 # AVATAR SETTINGS
 ## Information about the AI bot
 chatbot_name: Alice  # the name of the avatar as written to Terminal and chat history
-ai_color: B_I_MAGENTA  # the color of the avatar's text in the terminal (see terminal_colors module)
-llm_model: openai  # the LLM-family to use (openai or mistral, models are defined below)
-
-# COMMAND LINE MODE
-# Chose between 3 chat input methods (can be overriden by argparse):
-## text: type text in the terminal, get text answers
-## voice: speak to the microphone, get voice answers
-## voice_k: hold and release keyboard spacebar to speak, get voice answers (recommended in a noisy environment)
-input_method: text  # specify default input method for chatbot
-user_color: B_I_CYAN  # the color of the user's text in the terminal (see terminal_colors module)
+chatbot_color: r"\033[95m"  # (MAGENTA) the color of the chatbot's text in the terminal
 
 # WEB UI MODE
 ## Audio filepaths should be relative to the static folder
@@ -27,7 +19,7 @@ processing_message: ...processing...  # the message to display while the chatbot
 # AGENT SETTINGS
 ## We use the following settings to shape Alice's responses
 generative_model: gpt-4o-mini  # the OpenAI model to use
-openai_temperature: 1.2  # the temperature of the model (higher values make the model more creative)
+openai_temperature: 1.5  # the temperature of the model (higher values make the model more creative)
 prompt_filepath: prompt.jsonl  # local path to jsonl file with prompts to use for the chatbot
 tools_filepath: tools.py  # local path to python module tools.py defining the tools available to the langchain agent (if used)
 agent_verbose: true  # print agent activity logs
@@ -43,8 +35,9 @@ embedding_model: all-MiniLM-L6-v2  # the model to use for embedding text
 add_similarity_threshold: 0.4  # the similarity threshold when adding a document to the database (higher values are more restrictive)
 search_similarity_threshold: 0.5  # distance threshold for searching the database (smaller values are more restrictive)
 
-# SQLITE TRANSCRIPTS DATABASE SETTINGS
-transcripts_db: sqlite_db/transcripts.db  # local path to the sqlite database file for storing transcripts
+# SPEECH RECOGNITION SETTINGS
+## We use Google Speech Recognition API to recognize the user's speech
+chat_language: en-US  # Chose default language to converse with the avatar (a matching edgetts_voice should be defined below)
 
 # EDGE TTS SETTINGS
 ## We use Microsoft Edge Text-to-Speech API
@@ -56,24 +49,16 @@ edgetts_voices:
   fr-FR: fr-FR-DeniseNeural 
   de-DE: de-DE-KatjaNeural
   ro-RO: ro-RO-AlinaNeural
-temp_audio_filepath: _temp.wav  # local path where to save the temporary TTS audio file (will be deleted after use)
 tts_rate: +10%  # the rate of speech (speed) in percentage
 tts_volume: +0%  # the volume of speech in percentage
 tts_pitch: +0Hz  # the pitch of speech in Hz
 
-# SPEECH RECOGNITION SETTINGS
-## We use Google Speech Recognition API to recognize the user's speech
-chat_language: en-US  # Chose default language to converse with the avatar (can be overriden by argparse).
-## In command-line mode only
-speech_timeout: 10  # how many seconds to wait for the user to speak before timing out
-phrase_time_out: 10  # how many seconds to wait for the user to resume talking after a pause (increase the latency)
-
 # LOG SETTINGS
 # We use Python logging module to log debug information to a file
 log_level: DEBUG  # the log level to use
-log_filepath: logs/ai_chatbot.log  # local path where the log file will be saved
+log_filepath: logs/ai_librarian.log  # local path where the log file will be saved
 log_format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'  # the format of the log messages
-empty_log: true  # if true, the log file will be emptied on startup
+clear_log: true  # if true, the log file will be emptied on startup
 
 # CHAT HISTORY SETTINGS
 # We can save the current chat to a csv file

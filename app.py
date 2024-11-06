@@ -1,10 +1,11 @@
-# config loader (put on top as config is needed in most modules)
-from config_loader import load_config
-config = load_config('config.yaml')
 # load api-keys to environment
 import os
+import sys
 from dotenv import load_dotenv
 load_dotenv()
+# config loader (put before custom modules)
+from config_loader import load_config
+config = load_config('config.yaml')
 # import custom modules
 import helpers
 # import flask and socketio
@@ -13,7 +14,7 @@ from flask_socketio import SocketIO
 from threading import Thread
 from pydub import AudioSegment
 # create avatar instance
-from ai_librarian_app import AiLibrarian
+from ai_librarian import AiLibrarian
 avatar = AiLibrarian()
 avatar.create_worker_agent()
 
@@ -29,18 +30,32 @@ def index():
     if request.method == "POST":
         user_message = request.form["user_input"]
 
+        # CHAT HIDDEN COMMANDS FOR DEBUGGING
+        # exit program if user types 'exit'
+        if user_message.lower() == '#exit':
+            print("Exiting program.")
+            sys.exit()
+        # clear chat history if user types 'clear'
+        elif user_message.lower() == '#clear':
+            chat_history.clear()
+            socketio.emit("update_chat", {"chat_history": chat_history})
+            return redirect(url_for("index"))
+        # hush chatbot if user types 'hush'
+        elif user_message.lower() == '#hush':
+            return redirect(url_for("index"))
+
         # ignore empty inputs
         if not user_message.strip():
             return redirect(url_for("index"))
 
+        # add user message and chatbot temporary message
         chat_history.append({"sender": config['user_name'], "message": user_message})
+        chat_history.append({"sender": config['chatbot_name'], "message": config['thinking_message']})
+        socketio.emit("update_chat", {"chat_history": chat_history})
 
         # process answer on a background thread
-        thread = Thread(target=process_text_answer, args=(user_message,))
+        thread = Thread(target=process_audio_answer, args=(user_message,))
         thread.start()
-
-        # add temporary message from chatbot
-        chat_history.append({"sender": config['chatbot_name'], "message": config['thinking_message']})
 
         return redirect(url_for("index"))
 
@@ -62,31 +77,11 @@ def process_audio_input():
     wav_file = AudioSegment.from_file(webm_path, format="webm")
     wav_file.export(wav_path, format="wav")
 
-    # add temporary message from user
-    chat_history.append({"sender": config['user_name'], "message": config['processing_message']})
-
     # Start the transcription thread
     thread = Thread(target=process_audio_message, args=(wav_path,))
     thread.start()
 
     return jsonify({"status": "Processing started"}), 200
-
-
-def process_text_answer(user_message: str) -> str:
-    chatbot_answer = avatar.generate_model_answer(user_message)
-
-    # Remove temporary message
-    if chat_history and chat_history[-1]["message"] == config['thinking_message']:
-        chat_history.pop()
-
-    # Add chatbot answer to chat history
-    if chatbot_answer:
-        chat_history.append({"sender": config['chatbot_name'], "message": chatbot_answer})
-
-    # Send the updated chat history to the client
-    socketio.emit("update_chat", {"chat_history": chat_history})
-
-    return chatbot_answer
 
 
 def process_audio_message(audio_path: str) -> None:
@@ -101,9 +96,6 @@ def process_audio_message(audio_path: str) -> None:
             os.remove(file)
 
     if user_message:
-        # Remove temporary message
-        if chat_history and chat_history[-1]["message"] == config['processing_message']:
-            chat_history.pop()
         # update chat history with user message and add temporary message from chatbot
         chat_history.append({"sender": config['user_name'], "message": user_message})
         chat_history.append({"sender": config['chatbot_name'], "message": config['thinking_message']})

@@ -377,4 +377,3 @@ def reset_collection(collection_name: str) -> None:
 
     # Recreate the collection
     create_collection(chroma_client, collection_name)
-

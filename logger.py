@@ -39,7 +39,7 @@ except Exception as e:
 
 
 # empty log file if option is set
-if config['empty_log']:
+if config['clear_log']:
     with open(log_file, 'w'):
         pass
 

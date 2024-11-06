@@ -31,7 +31,6 @@ config = get_config()
 # logger
 from logger import get_logger
 LOG = get_logger(Path(__file__).stem)
-# helpers
 
 
 # Wikipedia ----------------------------------------------------------------------------------------
@@ -327,15 +326,6 @@ def retrieve_youtube_transcript_from_url(youtube_url: str) -> str:
 
     LOG.debug("Tool call: retrieve_youtube_transcript_from_url")
 
-    # retrieve full transcript
-    try:
-        loader = YoutubeLoader.from_youtube_url(youtube_url, add_video_info=False)
-        docs = loader.load()[0]
-        transcript_text = docs.page_content.replace('\n', ' ')
-    except Exception as e:
-        LOG.error(f"Error retrieving transcript: {e}")
-        return "The transcript is not available for this youtube video."
-
     # get video metadata
     video = search_youtube(get_videoid_from_url(youtube_url), max_results=1)
     metadata = filter_metadata(video[0]) if video else {}
@@ -348,6 +338,15 @@ def retrieve_youtube_transcript_from_url(youtube_url: str) -> str:
     else:
         LOG.debug("Video metadata not found, skipping transcript processing.")
         return "I can't access the video title and/or description to grade its relevance."
+
+    # retrieve full transcript
+    try:
+        loader = YoutubeLoader.from_youtube_url(youtube_url, add_video_info=False)
+        docs = loader.load()[0]
+        transcript_text = docs.page_content.replace('\n', ' ')
+    except Exception as e:
+        LOG.error(f"Error retrieving transcript: {e}")
+        return "The transcript is not available for this youtube video."
 
     # fetch summary from database if exists, otherwise summarize and store in database
     summary = get_video_summary_from_id('book_reviews', metadata['video_id'])

@@ -159,6 +159,7 @@ cython_debug/
 Notebooks/
 
 # folders
+_backup/
 medias/
 downloads/
 RnD/
@@ -166,6 +167,8 @@ chroma_db/
 csv/
 logs/
 static/audio/
+backup/
+datasets/
 
 # extensions
 *.env
