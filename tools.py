@@ -9,6 +9,7 @@ Date: 2024-07-25
 
 # path modules
 import os
+import re
 import json
 from pathlib import Path
 from pydantic import Field
@@ -106,6 +107,24 @@ def get_youtube_client() -> object:
         )
 
     return _youtube_client
+
+
+def get_videoid_from_url(url: str) -> str:
+    """Extract the video ID from a YouTube URL.
+
+    Args:
+        url (str): The YouTube video URL.
+
+    Returns:
+        str: The video ID extracted from the URL.
+    """
+    url = url.split("/")[-1]
+    if url.startswith("watch?v="):
+        match = re.search(r"v=([^&]+)", url)
+        if match:
+            return match.group(1)
+    # if the URL is already the video ID or the regex did not return any match
+    return url
 
 
 def search_youtube(query: str, max_results: int = MAX_RESULTS) -> list:
@@ -318,13 +337,17 @@ def retrieve_youtube_transcript_from_url(youtube_url: str) -> str:
         return "The transcript is not available for this youtube video."
 
     # get video metadata
-    video = search_youtube(youtube_url, max_results=1)
+    video = search_youtube(get_videoid_from_url(youtube_url), max_results=1)
     metadata = filter_metadata(video[0]) if video else {}
 
     # relevance check if the video is about litterature
-    if not models.relevance_grader(title=metadata['title'], description=metadata['description']):
-        LOG.debug("Video is not relevant to literature, skipping transcript processing.")
-        return "This video is not relevant to literature."
+    if 'title' in metadata or 'description' in metadata:
+        if not models.relevance_grader(title=metadata.get('title', ''), description=metadata.get('description', '')):
+            LOG.debug("Video is not relevant to literature, skipping transcript processing.")
+            return "This video is not relevant to literature."
+    else:
+        LOG.debug("Video metadata not found, skipping transcript processing.")
+        return "I can't access the video title and/or description to grade its relevance."
 
     # fetch summary from database if exists, otherwise summarize and store in database
     summary = get_video_summary_from_id('book_reviews', metadata['video_id'])
