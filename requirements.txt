@@ -11,5 +11,4 @@ youtube_transcript_api
 google-api-python-client
 flask
 pandas
-giskard[llm]
 tiktoken
