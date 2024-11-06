@@ -1,9 +1,6 @@
 edge_tts
 pydub
 SpeechRecognition
-keyboard
-PyAudio
-setuptools
 PyYAML
 langchain
 langchain_openai
@@ -14,3 +11,5 @@ youtube_transcript_api
 google-api-python-client
 flask
 pandas
+giskard[llm]
+tiktoken
