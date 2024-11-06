@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Filename: ai_chatbot.py
-Description: Defines the AiChatbot class to chat with the avatar.
+Description: Defines the AiChatbot class to chat with the avatar using the command line interface.
 Author: @alexdjulin
 Date: 2024-07-25
 """

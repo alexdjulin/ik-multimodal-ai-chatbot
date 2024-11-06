@@ -288,7 +288,6 @@ def generate_audio_from_text(text: str, language: str = None) -> str:
         Exception: if error generating audio from text.
     '''
 
-    print('TRANSCRIBING AUDIO')
     if language is None:
         language = config['chat_language']
 

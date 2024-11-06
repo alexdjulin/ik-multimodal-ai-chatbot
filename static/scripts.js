@@ -1,6 +1,7 @@
 var socket = io();
 var mediaRecorder;
 var audioChunks = [];
+const talkButton = document.getElementById('talk-button');
 
 // Scroll chat to the bottom initially
 document.addEventListener('DOMContentLoaded', (event) => {
@@ -29,14 +30,32 @@ socket.on('update_chat', function(data) {
 
 // Listen for audio responses
 socket.on('new_audio_response', function(data) {
-    var chatHistory = document.querySelector('.chat-history');
-    var nameClass = 'name-chatbot';
-    chatHistory.innerHTML += `<p><strong class="${nameClass}">Alice:</strong> ${data.message}</p>`;
-    scrollToBottom();
-
-    // Play audio response
-    var audio = new Audio(data.audio_path);
+    // Add a unique query parameter to avoid caching
+    var uniqueAudioPath = data.audio_path + '?t=' + new Date().getTime();
+    
+    // Play audio response with the unique path
+    var audio = new Audio(uniqueAudioPath);
     audio.play();
+
+    // Delete audio file after it has finished playing
+    audio.addEventListener('ended', function() {
+        fetch('/delete_audio', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ audio_path: data.audio_path })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "success") {
+                console.log("Audio file deleted successfully.");
+            } else {
+                console.error("Error deleting audio file:", data.message);
+            }
+        })
+        .catch(error => console.error("Fetch error:", error));
+    });
 });
 
 // Initialize audio recording
@@ -78,23 +97,25 @@ document.getElementById('talk-button').addEventListener('mouseup', function() {
                 body: formData
             })
             .then(response => response.json())
-            .then(data => {
-                console.log('Server response:', data);
-                handleServerResponse(data);
-            })
+            .then(data => console.log('Server response:', data))
             .catch(error => console.error('Error:', error));
         };
     }
 });
 
-// Handle server response after processing audio
-function handleServerResponse(data) {
-    var chatHistory = document.querySelector('.chat-history');
-    var nameClass = 'name-chatbot';
-    chatHistory.innerHTML += `<p><strong class="${nameClass}">Alice:</strong> ${data.message}</p>`;
-    scrollToBottom();
+// Detect CTRL+SPACE to simulate the 'Talk' button
+document.addEventListener('keydown', function(event) {
+    if (event.ctrlKey && event.code === 'Space') {
+        event.preventDefault(); // Prevent default space behavior
+        document.getElementById('talk-button').dispatchEvent(new Event('mousedown'));
+        talkButton.classList.add('active'); // Add active class (red color)
+    }
+});
 
-    // Play the audio response
-    var audio = new Audio(data.audio_path);
-    audio.play();
-}
+document.addEventListener('keyup', function(event) {
+    if (event.ctrlKey && event.code === 'Space') {
+        event.preventDefault();
+        document.getElementById('talk-button').dispatchEvent(new Event('mouseup'));
+        talkButton.classList.remove('active'); // Release active class (red color)
+    }
+});

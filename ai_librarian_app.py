@@ -28,6 +28,15 @@ LOG = get_logger(Path(__file__).stem)
 USER_NAME = config['user_name']
 CHATBOT_NAME = config['chatbot_name']
 
+# load terminal colors
+from terminal_colors import CYAN, MAGENTA, GREY, RESET, CLEAR
+
+# load user and chatbot colors dynamically from config
+from importlib import import_module
+terminal_colors_md = import_module('terminal_colors')
+USER_CLR = getattr(terminal_colors_md, config['user_color'], CYAN)
+AI_CLR = getattr(terminal_colors_md, config['ai_color'], MAGENTA)
+
 # setup csv file to store chat history
 CHAT_HISTORY_CSV = Path(__file__).parent / Path(config['chat_history'])
 os.makedirs(os.path.dirname(CHAT_HISTORY_CSV), exist_ok=True)
@@ -65,13 +74,15 @@ class AiLibrarian:
 
         self.worker = models.llm_agent()
 
-
     def generate_model_answer(self, user_message: str) -> None:
         '''Send new message and get answer from the LLM, stores it in class variable.
 
         Args:
             message (str): message to send to the LLM
         '''
+
+        # print user message
+        print(f"\n{USER_CLR}{config['user_name']}: {user_message.capitalize()}{RESET}")
 
         # add message to prompt and chat history
         helpers.write_to_csv(CHAT_HISTORY_CSV, USER_NAME, user_message)
@@ -88,6 +99,10 @@ class AiLibrarian:
         # write answer to chat history
         helpers.write_to_csv(CHAT_HISTORY_CSV, CHATBOT_NAME, answer)
         LOG.debug(f'{CHATBOT_NAME}: {answer}')
+
+        # print answer when not in verbose mode
+        if not config['agent_verbose']:
+            print(f"{AI_CLR}{config['chatbot_name']}: {answer.capitalize()}{RESET}")
 
         # store answer to class variable
         return answer

@@ -95,6 +95,11 @@ def process_audio_message(audio_path: str) -> None:
     # transcribe audio file into a text message
     user_message = helpers.transcribe_audio_file(audio_path)
 
+    # delete temp audio files
+    for file in [config['user_webm_filepath'], config['user_wav_filepath']]:
+        if os.path.exists(file):
+            os.remove(file)
+
     if user_message:
         # Remove temporary message
         if chat_history and chat_history[-1]["message"] == config['processing_message']:
@@ -115,19 +120,27 @@ def process_audio_answer(user_message):
     # Generate and play audio for Alice's response
     if chatbot_answer:
         audio_path = helpers.generate_audio_from_text(chatbot_answer)
-        # Remove temporary message
+        # Update chat history with chatbot answer
         if chat_history and chat_history[-1]["message"] == config['thinking_message']:
             chat_history.pop()
-        socketio.emit("new_audio_response", {"message": chatbot_answer, "audio_path": audio_path})
+        chat_history.append({"sender": config['chatbot_name'], "message": chatbot_answer})
+        socketio.emit("update_chat", {"chat_history": chat_history})
+        # Send the chatbot audio response to the client
+        if audio_path:
+            socketio.emit("new_audio_response", {"audio_path": audio_path})
+
+
+@app.route('/delete_audio', methods=['POST'])
+def delete_audio():
+    audio_path = request.json.get('audio_path')
+    if audio_path and os.path.exists(audio_path):
+        try:
+            os.remove(audio_path)
+            return jsonify({"status": "success", "message": "Audio file deleted."})
+        except Exception as e:
+            return jsonify({"status": "error", "message": f"Failed to delete audio file: {e}"})
+    return jsonify({"status": "error", "message": "Invalid or missing audio path."}), 400
 
 
 if __name__ == "__main__":
     socketio.run(app, debug=True)
-
-    # clear chat history
-    chat_history.clear()
-
-    # delete temp audio files
-    for file in [config['user_webm_filepath'], config['user_wav_filepath'], config['chatbot_audio_filepath']]:
-        if os.path.exists(file):
-            os.remove(file)

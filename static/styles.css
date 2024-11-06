@@ -72,7 +72,7 @@ button:hover {
 
 button#talk-button {
     padding: 10px 20px;
-    background-color: #2196F3; /* Orange color */
+    background-color: #2196F3;
     color: white;
     border: none;
     border-radius: 5px;
@@ -81,11 +81,15 @@ button#talk-button {
 }
 
 button#talk-button:hover {
-    background-color: #1875c1; /* Darker orange */
+    background-color: #1a7ed0;
 }
 
 button#talk-button:active {
-    background-color: #d91b1b; /* Darker orange */
+    background-color: #d91b1b;
+}
+
+button#talk-button.active { /* Add active class styling when pressing Talk shortcut */
+    background-color: #d91b1b;
 }
 
 .name-user {

@@ -36,7 +36,7 @@ if __name__ == '__main__':
 
     try:
         # Create avatar instance and agent
-        from ai_librarian import AiLibrarian
+        from ai_librarian_cmd import AiLibrarian
         avatar = AiLibrarian()
         avatar.create_worker_agent()
         # Initiate chat
