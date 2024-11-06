@@ -45,7 +45,7 @@ body {
     margin-top: 20px;
     display: flex;
     justify-content: flex-start;
-    width: 60%; /* Ensure this matches .chat-history width */
+    width: 50%; /* Ensure this matches .chat-history width */
 }
 
 input[type="text"] {

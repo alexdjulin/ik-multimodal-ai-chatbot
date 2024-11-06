@@ -20,10 +20,11 @@ import asyncio
 import speech_recognition as sr
 # config loader
 from config_loader import get_config
-config = get_config()
 # logger
 from logger import get_logger
 LOG = get_logger(Path(__file__).stem)
+# get config dict
+config = get_config()
 
 
 def format_string(prompt: str) -> str:

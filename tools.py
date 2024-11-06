@@ -27,11 +27,12 @@ from googleapiclient.discovery import build
 from youtube_transcript_api import YouTubeTranscriptApi
 # config loader
 from config_loader import get_config
-config = get_config()
 # logger
 from logger import get_logger
 LOG = get_logger(Path(__file__).stem)
 
+# get config dict
+config = get_config()
 
 # Wikipedia ----------------------------------------------------------------------------------------
 def search_wikipedia(query: str) -> str:

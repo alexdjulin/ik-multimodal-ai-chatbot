@@ -4,8 +4,7 @@ import sys
 from dotenv import load_dotenv
 load_dotenv()
 # config loader (put before custom modules)
-from config_loader import load_config
-config = load_config('config.yaml')
+from config_loader import get_config
 # import custom modules
 import helpers
 # import flask and socketio
@@ -17,7 +16,15 @@ from pydub import AudioSegment
 from ai_librarian import AiLibrarian
 avatar = AiLibrarian()
 avatar.create_worker_agent()
+# get config dict
+config = get_config()
 
+# load names and colors
+USER_NAME = config['user_name']
+CHATBOT_NAME = config['chatbot_name']
+USER_CLR = config['user_color']
+CHATBOT_CLR = config['chatbot_color']
+RESET_CLR = "\033[0m"
 
 # initialize Flask app, SocketIO and chat_history
 app = Flask(__name__)
@@ -29,6 +36,9 @@ chat_history = []
 def index():
     if request.method == "POST":
         user_message = request.form["user_input"]
+
+        # print user message to console
+        print(f"\n{USER_CLR}{USER_NAME}: {user_message.capitalize()}{RESET_CLR}")
 
         # CHAT HIDDEN COMMANDS FOR DEBUGGING
         # exit program if user types 'exit'
@@ -107,7 +117,12 @@ def process_audio_message(audio_path: str) -> None:
 
 def process_audio_answer(user_message):
     """Thread 2: Send user text to agent, generate response, and update chatbox."""
+
     chatbot_answer = avatar.generate_model_answer(user_message)
+
+    # print answer when not in verbose mode
+    if not config['agent_verbose']:
+        print(f"{CHATBOT_CLR}{CHATBOT_NAME}: {chatbot_answer.capitalize()}{RESET_CLR}")
 
     # Generate and play audio for Alice's response
     if chatbot_answer:

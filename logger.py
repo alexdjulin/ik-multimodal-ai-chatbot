@@ -11,6 +11,8 @@ import os
 from pathlib import Path
 import logging
 from config_loader import get_config
+
+# get config dict
 config = get_config()
 
 # define a namespace common to all logger instances
