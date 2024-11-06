@@ -59,8 +59,11 @@ def load_prompt_messages(prompt_filepath: str = None) -> list[tuple[str, str]]:
     return messages
 
 
-def llm_agent() -> AgentExecutor:
+def llm_agent(agent_tools: list = None) -> AgentExecutor:
     ''' Defines an LLM langchain agent with access to a list of tools to perform a task.
+
+    Args:
+        agent_tools (list): list of tool functions the agent has access to. Default is None (all).
 
     Return:
         (AgentExecutor): the agent instance
@@ -84,9 +87,13 @@ def llm_agent() -> AgentExecutor:
     # create prompt
     prompt = ChatPromptTemplate.from_messages(messages)
 
+    # set list of tool functions available to the agent, all by default
+    if agent_tools is None:
+        agent_tools = tools.agent_tools
+
     # create langchain agent
     agent = create_tool_calling_agent(
-        tools=tools.agent_tools,
+        tools=agent_tools,
         llm=llm,
         prompt=prompt
     )

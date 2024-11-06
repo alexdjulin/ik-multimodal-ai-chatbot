@@ -45,12 +45,14 @@ class AiLibrarian:
         # langchain agent
         self.agent = None
 
-    def create_worker_agent(self) -> None:
-        '''
-        Create langchain agent
+    def create_worker_agent(self, agent_tools: list = None) -> None:
+        '''Create langchain agent
+
+        Args:
+            agent_tools (list): list of tool functions the agent has access to. Default is None (all).
         '''
 
-        self.agent = models.llm_agent()
+        self.agent = models.llm_agent(agent_tools)
 
     def generate_model_answer(self, user_message: str) -> None:
         '''Send new message and get answer from the LLM, stores it in class variable.
