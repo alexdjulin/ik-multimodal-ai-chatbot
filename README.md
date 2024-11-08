@@ -19,19 +19,20 @@ This project is a chatbot-powered digital librarian designed to assist users in 
 
 
 ## Installation
+This project has developped and tested on windows 11 x64 and `python 3.12.7`.
 Clone the repository and setup a virtual environment as follows.
 
 1. **Clone the repository**:
 
     ```bash
     git clone https://github.com/alexdjulin/ik-multimodal-ai-librarian.git
-    cd ai_librarian
+    cd ik-multimodal-ai-librarian
     ```
 
 2. **Set up a virtual environment**:
 
     ```bash
-    python3 -m venv venv
+    python -m venv venv
     source venv/bin/activate  # For Windows, use venv\\Scripts\\activate
     ```
 
