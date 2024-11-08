@@ -11,7 +11,6 @@ Date: 2024-11-04
 import os
 import json
 from pathlib import Path
-import tools
 # langchain
 from langchain_openai import ChatOpenAI
 from langchain.docstore.document import Document
@@ -19,6 +18,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain.memory import ConversationBufferWindowMemory
+import tools
 # get config dict
 from config_loader import get_config
 config = get_config()

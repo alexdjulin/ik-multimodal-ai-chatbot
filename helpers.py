@@ -9,13 +9,13 @@ Date: 2024-11-04
 """
 
 import os
+import asyncio
 from pathlib import Path
 import csv
 from datetime import datetime
 from textwrap import dedent
 # TTS
 import edge_tts
-import asyncio
 # STT
 import speech_recognition as sr
 # config loader
@@ -66,8 +66,8 @@ def write_to_csv(csvfile: str, *strings: list) -> bool:
     '''
 
     try:
-        with open(csvfile, mode='a', newline='', encoding='utf-8') as csvfile:
-            csv_writer = csv.writer(csvfile, quoting=csv.QUOTE_ALL, doublequote=True)
+        with open(csvfile, mode='a', newline='', encoding='utf-8') as file:
+            csv_writer = csv.writer(file, quoting=csv.QUOTE_ALL, doublequote=True)
             # remove tabs, line breaks and extra spaces
             safe_strings = [format_string(s) for s in strings]
             if config['add_timestamp']:
@@ -76,7 +76,7 @@ def write_to_csv(csvfile: str, *strings: list) -> bool:
             csv_writer.writerow(safe_strings)
 
     except Exception as e:
-        LOG.error(f"Error writing to CSV file: {e}")
+        LOG.error("Error writing to CSV file: %s", e)
         return False
 
     return True
@@ -116,10 +116,10 @@ def transcribe_audio_file(audio_file_path: str, language: str = None) -> str | N
         return text.capitalize()
 
     except sr.RequestError as e:
-        LOG.debug(f"Error connecting to Google API: {e}")
+        LOG.debug("Error connecting to Google API: %s", e)
 
     except Exception as e:
-        LOG.debug(f"Error transcribing audio: {e}")
+        LOG.debug("Error transcribing audio: %s", e)
 
 
 def generate_audio_from_text(text: str, language: str = None) -> str:
@@ -160,7 +160,7 @@ def generate_audio_from_text(text: str, language: str = None) -> str:
         asyncio.run(text_to_audio())
 
     except Exception as e:
-        LOG.error(f"Error generating audio: {e}.")
+        LOG.error("Error generating audio: %s.", e)
         return
 
     return audio_filepath

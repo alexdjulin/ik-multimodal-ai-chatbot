@@ -8,15 +8,15 @@ Author: @alexdjulin
 Date: 2024-11-04
 """
 
-import chromadb
-from chromadb.utils import embedding_functions
+import uuid
+from datetime import datetime
+from pathlib import Path
+from collections import defaultdict
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from langchain.text_splitter import CharacterTextSplitter
-from collections import defaultdict
-from datetime import datetime
-from pathlib import Path
-import uuid
+import chromadb
+from chromadb.utils import embedding_functions
 # load config
 from config_loader import get_config
 # logger
@@ -27,10 +27,10 @@ LOG = get_logger(Path(__file__).stem)
 config = get_config()
 
 # global variables
-_chroma_client = None
-_embedder = None
-_splitter = None
-separator = "-" * 80
+_CHROMA_CLIENT = None
+_EMBEDDER = None
+_SPLITTER = None
+SEPARATOR = "-" * 80
 COLLECTIONS = ['book_info', 'book_reviews']
 
 
@@ -42,10 +42,10 @@ def get_chroma_client() -> chromadb.PersistentClient:
         chromadb.PersistentClient: the database client
     """
 
-    global _chroma_client
-    if _chroma_client is None:
-        _chroma_client = initialise_database()
-    return _chroma_client
+    global _CHROMA_CLIENT
+    if _CHROMA_CLIENT is None:
+        _CHROMA_CLIENT = initialise_database()
+    return _CHROMA_CLIENT
 
 
 def get_embedder() -> SentenceTransformer:
@@ -55,10 +55,10 @@ def get_embedder() -> SentenceTransformer:
         SentenceTransformer: the SentenceTransformer model
     """
 
-    global _embedder
-    if _embedder is None:
-        _embedder = SentenceTransformer(config['embedding_model'])
-    return _embedder
+    global _EMBEDDER
+    if _EMBEDDER is None:
+        _EMBEDDER = SentenceTransformer(config['embedding_model'])
+    return _EMBEDDER
 
 
 def get_splitter() -> CharacterTextSplitter:
@@ -68,10 +68,10 @@ def get_splitter() -> CharacterTextSplitter:
         CharacterTextSplitter: the text splitter
     """
 
-    global _splitter
-    if _splitter is None:
-        _splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-    return _splitter
+    global _SPLITTER
+    if _SPLITTER is None:
+        _SPLITTER = CharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+    return _SPLITTER
 
 
 def relevance_grader(document: str, query: str) -> float:
@@ -127,7 +127,7 @@ def create_collection(chroma_client: chromadb.PersistentClient, collection_name:
 
     # check if collection already exists
     if collection_name in existing_collections:
-        LOG.warning(f"Collection name {collection_name} already exists.")
+        LOG.warning("Collection name %s already exists.", collection_name)
         return
 
     # get embedder
@@ -141,7 +141,7 @@ def create_collection(chroma_client: chromadb.PersistentClient, collection_name:
         metadata={"hnsw:space": "cosine"}
     )
 
-    LOG.debug(f"Collection '{collection_name}' has been created.")
+    LOG.debug("Collection '%s' has been created.", collection_name)
 
 
 def add_to_collection(text: str, collection_name: str, metadata: dict) -> None:
@@ -161,14 +161,15 @@ def add_to_collection(text: str, collection_name: str, metadata: dict) -> None:
         if collection.name == collection_name:
             break
     else:
-        LOG.error(f"Collection name {collection_name} not found.")
+        LOG.error("Collection name %s not found.", collection_name)
         return
 
     # Dont add the document if it does not meet the similarity threshold (irrelevant to query)
     if 'query' in metadata:
         similarity = relevance_grader(text, metadata['query'])
         if similarity < config['add_similarity_threshold']:
-            LOG.debug(f"Document not added to {collection_name}. Cosine similarity: {similarity}")
+            LOG.debug("Document not added to %s. Cosine similarity: %s",
+                      collection_name, similarity)
             return
 
     # get embedder
@@ -199,7 +200,8 @@ def add_to_collection(text: str, collection_name: str, metadata: dict) -> None:
             embeddings=[embedding]
         )
 
-    LOG.debug(f"Document:\n{text}\nSplit: {chunks_len} chunks\nAdded to collection: {collection_name}\nMetadata:\n{metadata}")
+    LOG.debug("Document:\n%s\nSplit: %s chunks\nAdded to collection: %s\nMetadata:\n%s",
+              text, chunks_len, collection_name, metadata)
 
 
 def search_collection(query: str, collection_name: str, n_results: int = 3) -> list:
@@ -222,7 +224,7 @@ def search_collection(query: str, collection_name: str, n_results: int = 3) -> l
         if collection.name == collection_name:
             break
     else:
-        LOG.error(f"Collection name {collection_name} not found.")
+        LOG.error("Collection name %s not found.", collection_name)
         return []
 
     # get embedder
@@ -278,15 +280,15 @@ def print_collection_contents(collection_name: str) -> None:
     all_docs = collection.get(include=['documents', 'metadatas'])
 
     # Print the number of documents in the collection
-    print(separator)
+    print(SEPARATOR)
     print(f"Retrieved {len(all_docs['documents'])} documents from collection {collection_name}")
 
     # Print the contents of the collection
     for i, (doc, metadata) in enumerate(zip(all_docs['documents'], all_docs['metadatas'])):
-        print(separator)
+        print(SEPARATOR)
         print(f"Document {i + 1} - Metadata: {metadata}")
         print(doc)
-    print(separator)
+    print(SEPARATOR)
 
 
 def remove_duplicates_by_query_or_title(collection_name: str) -> None:
@@ -342,14 +344,13 @@ def remove_duplicates_by_query_or_title(collection_name: str) -> None:
     duplicate_ids_title = [ids[1:] for ids in unique_titles.values() if len(ids) > 1]
 
     # Combine all duplicate IDs and flatten the list
-    duplicate_ids = set(
-        [item for sublist in (duplicate_ids_query + duplicate_ids_title) for item in sublist]
-    )
+    duplicate_ids = {item for sublist in (duplicate_ids_query + duplicate_ids_title)
+                     for item in sublist}
 
     if duplicate_ids:
         # Delete duplicates from the collection
         collection.delete(ids=list(duplicate_ids))
-        LOG.debug(f"Removed {len(duplicate_ids)} duplicate documents.")
+        LOG.debug("Removed %d duplicate documents.", len(duplicate_ids))
     else:
         LOG.debug("No duplicates found.")
 
@@ -372,7 +373,7 @@ def reset_collection(collection_name: str) -> None:
 
         if confirmation == 'YES':
             chroma_client.delete_collection(name=collection_name)
-            LOG.debug(f"Collection '{collection_name}' has been deleted.")
+            LOG.debug("Collection '%s' has been deleted.", collection_name)
         else:
             LOG.debug("Operation cancelled. No changes were made.")
             return

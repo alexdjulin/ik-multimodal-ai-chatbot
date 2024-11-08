@@ -7,8 +7,8 @@ Author: @alexdjulin
 Date: 2024-11-04
 """
 
-import yaml
 from typing import Optional, Dict
+import yaml
 
 # Initialize the global config variable as None
 _config: Optional[Dict] = None
@@ -31,12 +31,12 @@ def load_config(config_file: str = DEFAULT_CONFIG_FILE) -> Dict:
 
     global _config
     try:
-        with open(config_file, "r") as file:
+        with open(config_file, "r", encoding='utf-8') as file:
             _config = yaml.safe_load(file)
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Config file '{config_file}' not found.")
+    except FileNotFoundError as exc:
+        raise FileNotFoundError(f"Config file '{config_file}' not found.") from exc
     except yaml.YAMLError as e:
-        raise ValueError(f"Error parsing YAML file: {e}")
+        raise ValueError(f"Error parsing YAML file: {e}") from e
 
     return _config
 

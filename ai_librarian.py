@@ -26,7 +26,7 @@ config = get_config()
 CHAT_HISTORY_CSV = Path(__file__).parent / Path(config['chat_history'])
 os.makedirs(os.path.dirname(CHAT_HISTORY_CSV), exist_ok=True)
 if os.path.exists(CHAT_HISTORY_CSV) and config['clear_history']:
-    with open(CHAT_HISTORY_CSV, 'w'):
+    with open(CHAT_HISTORY_CSV, 'w', encoding='utf-8'):
         pass
 
 # load names
@@ -49,7 +49,7 @@ class AiLibrarian:
         '''Create langchain agent
 
         Args:
-            agent_tools (list): list of tool functions the agent has access to. Default is None (all).
+            agent_tools (list): list of tool functions the agent has access to. Default is None.
         '''
 
         self.agent = models.llm_agent(agent_tools)
@@ -63,7 +63,7 @@ class AiLibrarian:
 
         # add message to prompt and chat history
         helpers.write_to_csv(CHAT_HISTORY_CSV, USER_NAME, user_message)
-        LOG.debug(f'{USER_NAME}: {user_message}')
+        LOG.debug('%s: %s', USER_NAME, user_message)
 
         # invoke langchain worker and get answer
         answer = self.agent.invoke({"input": user_message})
@@ -75,7 +75,7 @@ class AiLibrarian:
 
         # write answer to chat history
         helpers.write_to_csv(CHAT_HISTORY_CSV, CHATBOT_NAME, answer)
-        LOG.debug(f'{CHATBOT_NAME}: {answer}')
+        LOG.debug('%s: %s', CHATBOT_NAME, answer)
 
         # store answer to class variable
         return answer

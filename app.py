@@ -7,22 +7,24 @@ Author: @alexdjulin
 Date: 2024-11-04
 """
 
-# load api-keys to environment
+# Standard library imports
 import os
 import sys
+from threading import Thread
+
+# Third-party imports
 from dotenv import load_dotenv
 load_dotenv()
-# config loader (put before custom modules)
-from config_loader import get_config
-# import custom modules
-import helpers
-# import flask and socketio
+
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_socketio import SocketIO
-from threading import Thread
 from pydub import AudioSegment
-# create avatar instance
+
+# First-party imports
+import helpers
+from config_loader import get_config
 from ai_librarian import AiLibrarian
+
 avatar = AiLibrarian()
 avatar.create_worker_agent()
 # get config dict
@@ -72,7 +74,8 @@ def index():
 
         # add user message and chatbot temporary message
         chat_history.append({"sender": config['user_name'], "message": user_message})
-        chat_history.append({"sender": config['chatbot_name'], "message": config['thinking_message']})
+        chat_history.append({"sender": config['chatbot_name'],
+                             "message": config['thinking_message']})
         socketio.emit("update_chat", {"chat_history": chat_history})
 
         # process answer on a background thread
@@ -130,7 +133,8 @@ def process_audio_message(audio_path: str) -> None:
     if user_message:
         # update chat history with user message and add temporary message from chatbot
         chat_history.append({"sender": config['user_name'], "message": user_message})
-        chat_history.append({"sender": config['chatbot_name'], "message": config['thinking_message']})
+        chat_history.append({"sender": config['chatbot_name'],
+                             "message": config['thinking_message']})
         socketio.emit("update_chat", {"chat_history": chat_history})
         # Start the agent response process in a new thread
         thread = Thread(target=process_audio_answer, args=(user_message,))
@@ -181,5 +185,4 @@ def delete_audio():
 
 
 if __name__ == "__main__":
-    """Main entry point of the application."""
     socketio.run(app, debug=config['debug_mode'])
