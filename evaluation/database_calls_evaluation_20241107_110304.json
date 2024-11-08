@@ -1,0 +1,21 @@
+{
+    "mean_response_time": 19.284809198785336,
+    "mean_answer_score": 3.382978723404255,
+    "mean_sanity_check": 0.6170212765957447,
+    "mean_readability_score": 27.755425531914888,
+    "mean_character_count": 4624.585106382979,
+    "mean_word_count": 490.3936170212766,
+    "mean_token_count": 1273.2659574468084,
+    "mean_semantic_overlap": 0.43325257451927407,
+    "total_prompt_tokens": 1138682,
+    "total_completion_tokens": 81127,
+    "total_tokens": 1219809,
+    "total_prompt_cost": 170.8023,
+    "total_completion_cost": 48.6762,
+    "total_cost": 219.4785,
+    "mean_latency_p50": 0.567,
+    "mean_latency_p99": 121.33983,
+    "first_token_p50": 0.7855,
+    "first_token_p99": 4.25619,
+    "mean_error_rate": 0.020833333333333332
+}
