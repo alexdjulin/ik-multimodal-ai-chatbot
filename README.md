@@ -19,7 +19,7 @@ This project is a chatbot-powered digital librarian designed to assist users in 
 
 
 ## Installation
-This project has developped and tested on windows 11 x64 and `python 3.12.7`.
+This project was developped and tested on windows 11 x64 and `python 3.12.7`.
 Clone the repository and setup a virtual environment as follows.
 
 1. **Clone the repository**:
