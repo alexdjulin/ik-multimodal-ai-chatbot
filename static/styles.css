@@ -1,0 +1,101 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #000;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.main-container {
+    width: 95%; /* Match this width with the width of .chat-container */
+    margin: 20px auto; /* Center the main container */
+}
+
+.chat-container {
+    display: flex;
+    margin-top: 30px;
+    width: 95%;
+}
+
+.chat-history {
+    width: 50%;
+    margin-right: 20px;
+    background-color: #333;
+    padding: 20px;
+    border-radius: 10px;
+    overflow-y: auto;
+    max-height: 800px;
+    justify-content: flex-end;
+}
+
+.alice-image {
+    width: 50%;
+    justify-content: flex-start;
+}
+
+.alice-image img {
+    max-height: 840px;  /* chat-history max heights + padding top and bottom*/
+    object-fit: cover;
+}
+
+.input-form {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-start;
+    width: 50%; /* Ensure this matches .chat-history width */
+}
+
+input[type="text"] {
+    width: 70%; /* leave room for the buttons */
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    margin-right: 10px;
+    border: 1px solid #555;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+button#talk-button {
+    padding: 10px 20px;
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 10px; /* Space between buttons */
+}
+
+button#talk-button:hover {
+    background-color: #1a7ed0;
+}
+
+button#talk-button:active {
+    background-color: #d91b1b;
+}
+
+button#talk-button.active { /* Add active class styling when pressing Talk shortcut */
+    background-color: #d91b1b;
+}
+
+.name-user {
+    color: #2196F3;
+}
+
+.name-chatbot {
+    color: #4CAF50;
+}

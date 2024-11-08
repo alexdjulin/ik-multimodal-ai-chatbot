@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with Alice</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="main-container">
+        <div class="chat-container">
+            <div class="chat-history">
+                {% for message in chat_history %}
+                <p>
+                    <strong class="{% if message.sender == 'Alice' %}name-chatbot{% else %}name-user{% endif %}">
+                        {{ message.sender }}:
+                    </strong>
+                        {{ message.message }}
+                </p>
+                {% endfor %}
+            </div>
+            <div class="alice-image">
+                <img src="{{ url_for('static', filename='alice.jpg') }}" alt="Alice Image">
+            </div>
+        </div>
+        <div class="input-form">
+            <form id="chat-form" method="post" action="{{ url_for('index') }}" style="width: 100%;">
+                <input type="text" id="user_input" name="user_input" placeholder="Talk to Alice..." autocomplete="off" autofocus>
+                <button type="submit" id="send-button">Send</button>
+                <button type="button" id="talk-button">Talk</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Include Socket.IO -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
+    <!-- Include external JavaScript -->
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+</body>
+</html>

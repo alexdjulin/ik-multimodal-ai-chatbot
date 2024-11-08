@@ -1,0 +1,15 @@
+edge_tts
+pydub
+SpeechRecognition
+PyYAML
+langchain
+langchain_openai
+langchain_community
+wikipedia
+python-dotenv
+youtube_transcript_api
+google-api-python-client
+flask
+pandas
+tiktoken
+giskard[llm]

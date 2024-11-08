@@ -1,0 +1,70 @@
+### This config file is used to set all the parameters for the AI Librarian chatbot. It is loaded wherever needed in the code using the config_loader.py module.
+
+# USER SETTINGS
+## How the user should interact with the avatar
+user_name: Alex  # the name of the user as written to Terminal and chat history
+user_color: "\033[96m"  # (CYAN) the color of the user's text in the terminal
+
+# AVATAR SETTINGS
+## Information about the AI bot
+chatbot_name: Alice  # the name of the avatar as written to Terminal and chat history
+chatbot_color: "\033[95m"  # (MAGENTA) the color of the chatbot's text in the terminal
+
+# WEB UI MODE
+## Audio filepaths should be relative to the static folder
+user_webm_filepath: static/audio/user_message.webm  # local path where to save the temporary webm audio file
+user_wav_filepath: static/audio/user_message.wav  # local path where to save the converted wav file
+chatbot_audio_filepath: static/audio/chatbot_answer.wav  # local path where to save the chatbot's audio answer
+thinking_message: ...thinking...  # the message to display while the chatbot is thinking
+processing_message: ...processing...  # the message to display while the chatbot is processing the user's input
+debug_mode: false  # if true, print debug information to the terminal
+
+# AGENT SETTINGS
+## We use the following settings to shape Alice's responses
+generative_model: gpt-4o-mini  # the OpenAI model to use
+openai_temperature: 1.5  # the temperature of the model (higher values make the model more creative)
+prompt_filepath: prompt.jsonl  # local path to jsonl file with prompts to use for the chatbot
+tools_filepath: tools.py  # local path to python module tools.py defining the tools available to the langchain agent (if used)
+agent_verbose: true  # print agent activity logs
+
+# ADDITONAL MODELS SETTINGS
+## We use the following model and settings to summarize documents
+summarizer_model: gpt-4o-mini  # the model to use for summarization
+relevance_grader_model: gpt-4o-mini  # the model to use for grading relevance
+
+# CHROMADB VECTORSTORE SETTINGS
+chromadb_path: chroma_db/  # local path to the database file
+embedding_model: all-MiniLM-L6-v2  # the model to use for embedding text
+add_similarity_threshold: 0.4  # the similarity threshold when adding a document to the database (higher values are more restrictive)
+search_similarity_threshold: 0.5  # distance threshold for searching the database (smaller values are more restrictive)
+
+# SPEECH RECOGNITION SETTINGS
+## We use Google Speech Recognition API to recognize the user's speech
+chat_language: en-GB  # Chose default language to converse with the avatar (a matching edgetts_voice should be defined below)
+
+# EDGE TTS SETTINGS
+## We use Microsoft Edge Text-to-Speech API
+## List voices below that will be used based on the chat_language key
+## See: https://gist.github.com/BettyJJ/17cbaa1de96235a7f5773b8690a20462
+edgetts_voices: 
+  en-US: en-US-AriaNeural
+  en-GB: en-GB-SoniaNeural
+  fr-FR: fr-FR-DeniseNeural 
+  de-DE: de-DE-KatjaNeural
+  ro-RO: ro-RO-AlinaNeural
+tts_rate: +10%  # the rate of speech (speed) in percentage
+tts_volume: +0%  # the volume of speech in percentage
+tts_pitch: +0Hz  # the pitch of speech in Hz
+
+# LOG SETTINGS
+# We use Python logging module to log debug information to a file
+log_level: DEBUG  # the log level to use
+log_filepath: logs/ai_librarian.log  # local path where the log file will be saved
+log_format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'  # the format of the log messages
+clear_log: true  # if true, the log file will be emptied on startup
+
+# CHAT HISTORY SETTINGS
+# We can save the current chat to a csv file
+chat_history: csv/chat_history.csv  # local path where the chat history will be saved
+add_timestamp: true  # if true, add a timestamp to each chat message
+clear_history: true  # if true, the chat history csv file will be emptied on startup
