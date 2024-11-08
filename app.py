@@ -35,7 +35,8 @@ def index():
         user_message = request.form["user_input"]
 
         # print user message to console
-        print(f"\n{USER_NAME}: {user_message.capitalize()}")
+        if user_message:
+            print(f"\n{USER_NAME}: {user_message.capitalize()}")
 
         # CHAT HIDDEN COMMANDS FOR DEBUGGING
         # exit program if user types 'exit'
@@ -96,7 +97,8 @@ def process_audio_message(audio_path: str) -> None:
 
     # transcribe audio file into a text message
     user_message = helpers.transcribe_audio_file(audio_path)
-    print(f"\n{USER_NAME}: {user_message.capitalize()}")
+    if user_message:
+        print(f"\n{USER_NAME}: {user_message.capitalize()}")
 
     # delete temp audio files
     for file in [config['user_webm_filepath'], config['user_wav_filepath']]:
@@ -148,4 +150,4 @@ def delete_audio():
 
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True)
+    socketio.run(app, debug=config['debug_mode'])

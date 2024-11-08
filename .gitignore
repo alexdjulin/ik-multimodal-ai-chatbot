@@ -159,7 +159,7 @@ _backup/
 medias/
 downloads/
 RnD/
-chroma_db/
+chroma_db*/
 csv/
 logs/
 static/audio/
@@ -167,7 +167,6 @@ backup/
 datasets/
 
 # extensions
-*.env
 *.zip
 *.csv
 *.mp4

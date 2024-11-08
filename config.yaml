@@ -15,6 +15,7 @@ user_wav_filepath: static/audio/user_message.wav  # local path where to save the
 chatbot_audio_filepath: static/audio/chatbot_answer.wav  # local path where to save the chatbot's audio answer
 thinking_message: ...thinking...  # the message to display while the chatbot is thinking
 processing_message: ...processing...  # the message to display while the chatbot is processing the user's input
+debug_mode: false  # if true, print debug information to the terminal
 
 # AGENT SETTINGS
 ## We use the following settings to shape Alice's responses
