@@ -22,9 +22,6 @@ config = get_config()
 # load names and colors
 USER_NAME = config['user_name']
 CHATBOT_NAME = config['chatbot_name']
-USER_CLR = config['user_color']
-CHATBOT_CLR = config['chatbot_color']
-RESET_CLR = "\033[0m"
 
 # initialize Flask app, SocketIO and chat_history
 app = Flask(__name__)
@@ -38,7 +35,7 @@ def index():
         user_message = request.form["user_input"]
 
         # print user message to console
-        print(f"\n{USER_CLR}{USER_NAME}: {user_message.capitalize()}{RESET_CLR}")
+        print(f"\n{USER_NAME}: {user_message.capitalize()}")
 
         # CHAT HIDDEN COMMANDS FOR DEBUGGING
         # exit program if user types 'exit'
@@ -99,6 +96,7 @@ def process_audio_message(audio_path: str) -> None:
 
     # transcribe audio file into a text message
     user_message = helpers.transcribe_audio_file(audio_path)
+    print(f"\n{USER_NAME}: {user_message.capitalize()}")
 
     # delete temp audio files
     for file in [config['user_webm_filepath'], config['user_wav_filepath']]:
@@ -122,7 +120,7 @@ def process_audio_answer(user_message):
 
     # print answer when not in verbose mode
     if not config['agent_verbose']:
-        print(f"{CHATBOT_CLR}{CHATBOT_NAME}: {chatbot_answer.capitalize()}{RESET_CLR}")
+        print(f"{CHATBOT_NAME}: {chatbot_answer.capitalize()}")
 
     # Generate and play audio for Alice's response
     if chatbot_answer:
