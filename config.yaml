@@ -37,7 +37,7 @@ search_similarity_threshold: 0.5  # distance threshold for searching the databas
 
 # SPEECH RECOGNITION SETTINGS
 ## We use Google Speech Recognition API to recognize the user's speech
-chat_language: en-US  # Chose default language to converse with the avatar (a matching edgetts_voice should be defined below)
+chat_language: en-GB  # Chose default language to converse with the avatar (a matching edgetts_voice should be defined below)
 
 # EDGE TTS SETTINGS
 ## We use Microsoft Edge Text-to-Speech API
