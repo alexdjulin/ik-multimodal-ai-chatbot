@@ -9,7 +9,8 @@ Meet Alice, your personal AI Librarian. Alice is a robust conversational chatbot
 See project slides in the `presentation` folder for project overview.
 
 ## Demo
-![app ui](readme/app_ui.png)
+
+https://github.com/user-attachments/assets/6715e5c7-c669-475c-b27d-d7be603b9171
 
 ## Flowchart
 This project is a chatbot-powered digital librarian designed to assist users in finding information about various topics. It leverages a combination of an AI agent, Retrieval-Augmented Generation (RAG), and several tools to provide informative and contextually relevant responses.
