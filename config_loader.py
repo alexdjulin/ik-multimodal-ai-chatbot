@@ -8,7 +8,6 @@ Date: 2024-11-04
 """
 
 import yaml
-from pathlib import Path
 from typing import Optional, Dict
 
 # Initialize the global config variable as None

@@ -1,3 +1,12 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Filename: app.py
+Description: Main application file to run the Flask web server and chat with the avatar.
+Author: @alexdjulin
+Date: 2024-11-04
+"""
+
 # load api-keys to environment
 import os
 import sys
@@ -31,6 +40,11 @@ chat_history = []
 
 @app.route("/", methods=["GET", "POST"])
 def index():
+    """Main endpoint to render the chat interface and handle user input.
+
+    Returns:
+        render_template: Rendered HTML template with chat history.
+    """
     if request.method == "POST":
         user_message = request.form["user_input"]
 
@@ -72,7 +86,11 @@ def index():
 
 @app.route("/process_audio", methods=["POST"])
 def process_audio_input():
-    """Endpoint to handle audio upload and processing."""
+    """Endpoint to handle audio upload and processing.
+
+    Returns:
+        jsonify: JSON response with processing status.
+    """
     if 'audio' not in request.files:
         return jsonify({"error": "No audio file provided"}), 400
 
@@ -93,7 +111,11 @@ def process_audio_input():
 
 
 def process_audio_message(audio_path: str) -> None:
-    """Thread 1: Transcribe audio and update chatbox with user message."""
+    """Thread 1: Transcribe audio and update chatbox with user message.
+
+    Args:
+        audio_path (str): Path to the audio file.
+    """
 
     # transcribe audio file into a text message
     user_message = helpers.transcribe_audio_file(audio_path)
@@ -115,8 +137,12 @@ def process_audio_message(audio_path: str) -> None:
         thread.start()
 
 
-def process_audio_answer(user_message):
-    """Thread 2: Send user text to agent, generate response, and update chatbox."""
+def process_audio_answer(user_message: str) -> None:
+    """Thread 2: Send user text to agent, generate response, and update chatbox.
+
+    Args:
+        user_message (str): User message to send to the agent.
+    """
 
     chatbot_answer = avatar.generate_model_answer(user_message)
 
@@ -139,6 +165,11 @@ def process_audio_answer(user_message):
 
 @app.route('/delete_audio', methods=['POST'])
 def delete_audio():
+    """Endpoint to delete audio file.
+
+    Returns:
+        jsonify: JSON response with deletion status.
+    """
     audio_path = request.json.get('audio_path')
     if audio_path and os.path.exists(audio_path):
         try:
@@ -150,4 +181,5 @@ def delete_audio():
 
 
 if __name__ == "__main__":
+    """Main entry point of the application."""
     socketio.run(app, debug=config['debug_mode'])

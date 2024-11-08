@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 """
 Filename: tools.py
-Description: Tool methods that the langchain agent can use to retrieve informatoin the LLM does not know about.
+Description: Tool methods that the langchain agent can use to retrieve information the LLM does not
+know about.
 Author: @alexdjulin
-Date: 2024-07-25
+Date: 2024-11-04
 """
 
 # path modules
@@ -218,7 +219,10 @@ def get_video_summary_from_id(collection_name: str, video_id: str) -> dict | Non
 
 
 class YoutubeSearchTool(BaseTool):
-    """Tool that fetches search results from YouTube."""
+    """Tool that fetches search results from YouTube.
+
+    Inherits from BaseTool.
+    """
 
     name: str = "YoutubeSearchTool"
     youtube_api_key: str = Field(
@@ -239,9 +243,17 @@ class YoutubeSearchTool(BaseTool):
     """
 
     def __init__(self, *args, **kwargs):
+        """Initialize the YoutubeSearchTool.
+
+        Raises:
+            ValueError: If a valid Youtube developer key is not provided.
+        """
+
         youtube_api_key = os.environ.get('google_api_key', '')
+
         if not os.environ.get('google_api_key', ''):
             raise ValueError("A valid Youtube developer key must be provided.")
+
         kwargs["youtube_api_key"] = youtube_api_key
         super().__init__(*args, **kwargs)
 
@@ -272,17 +284,21 @@ class YoutubeSearchTool(BaseTool):
                 transcript = YouTubeTranscriptApi.get_transcript(metadata['video_id'], languages=['en'])
                 transcript_text = ''.join([entry['text'] for entry in transcript])
                 transcript_text = transcript_text.replace('\n', ' ')
+
                 if len(transcript_text) > MAX_TRANSCRIPT_LENGTH:
                     # fetch summary from database if exists, otherwise summarize and store in database
                     summary = get_video_summary_from_id('book_reviews', metadata['video_id'])
+
                     if not summary:
                         LOG.debug('Summary not found, generating a new one and storing it in the database.')
                         summary = models.summarizer(context=transcript_text, query=query)
                         metadata['summary'] = summary
                         vector_db.add_to_collection(summary, collection_name="book_reviews", metadata=metadata)
+
                     else:
                         LOG.debug('Summary fetched from the database.')
                         metadata['summary'] = summary
+
                 else:
                     metadata['summary'] = transcript_text
 
@@ -294,6 +310,7 @@ class YoutubeSearchTool(BaseTool):
 
         # Convert to JSON format and return string
         results = html.unescape(json.dumps(video_list, indent=4, ensure_ascii=False))
+
         return results
 
     async def _arun(self, q: str, max_results: int = MAX_RESULTS) -> str:
@@ -323,6 +340,9 @@ def retrieve_youtube_transcript_from_url(youtube_url: str) -> str:
 
     Return:
         str: The full transcript of the YouTube video.
+
+    Raises:
+        Exception: If an error occurs while retrieving the transcript.
     """
 
     LOG.debug("Tool call: retrieve_youtube_transcript_from_url")
@@ -336,6 +356,7 @@ def retrieve_youtube_transcript_from_url(youtube_url: str) -> str:
         if not models.relevance_grader(title=metadata.get('title', ''), description=metadata.get('description', '')):
             LOG.debug("Video is not relevant to literature, skipping transcript processing.")
             return "This video is not relevant to literature."
+
     else:
         LOG.debug("Video metadata not found, skipping transcript processing.")
         return "I can't access the video title and/or description to grade its relevance."
@@ -345,6 +366,7 @@ def retrieve_youtube_transcript_from_url(youtube_url: str) -> str:
         loader = YoutubeLoader.from_youtube_url(youtube_url, add_video_info=False)
         docs = loader.load()[0]
         transcript_text = docs.page_content.replace('\n', ' ')
+
     except Exception as e:
         LOG.error(f"Error retrieving transcript: {e}")
         return "The transcript is not available for this youtube video."
@@ -358,6 +380,7 @@ def retrieve_youtube_transcript_from_url(youtube_url: str) -> str:
         summary = models.summarizer(context=transcript_text)
         metadata['summary'] = summary
         vector_db.add_to_collection(summary, collection_name="book_reviews", metadata=metadata)
+
     else:
         LOG.debug('Summary fetched from the database.')
         print(summary)
@@ -368,14 +391,28 @@ def retrieve_youtube_transcript_from_url(youtube_url: str) -> str:
 # Database tools -----------------------------------------------------------------------------------
 @tool
 def search_database_for_book_information(query_text: str) -> list:
-    """Search the database for book information (title, author, plot, release year, anectodes, etc.)."""
+    """Search the database for book information (title, author, plot, release year, anectodes, etc.)
+
+    Args:
+        query_text (str): The search query to look for in the database.
+
+    Returns:
+        list: A list of results from the database.
+    """
     LOG.debug("Tool call: search_database_for_book_information")
     return vector_db.search_collection(query_text, collection_name="book_info")
 
 
 @tool
 def search_database_for_book_reviews(query_text: str) -> list:
-    """Search the database for book reviews (youtuber reviews, blog posts, etc.)."""
+    """Search the database for book reviews (youtuber reviews, blog posts, etc.)
+
+    Args:
+        query_text (str): The search query to look for in the database.
+
+    Returns:
+        list: A list of results from the database.
+    """
     LOG.debug("Tool call: search_database_for_book_reviews")
     return vector_db.search_collection(query_text, collection_name="book_reviews")
 

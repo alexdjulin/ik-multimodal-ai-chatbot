@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Filename: ai_librarian_app.py
-Description: Defines the AiChatbot class to chat with the avatar using the web interface.
+Filename: ai_librarian.py
+Description: Defines the AiLibrarian class to chat with the avatar using the web interface.
 Author: @alexdjulin
-Date: 2024-11-05
+Date: 2024-11-04
 """
 
 import os

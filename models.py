@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 """
 Filename: models.py
-Description: This file contains the different models used in the project.
+Description: This file contains the main agent and the different models used in the project.
 Example: Agent chatbot, summarizer, extractor.
 Author: @alexdjulin
-Date: 2024-11-02
+Date: 2024-11-04
 """
 
 import os

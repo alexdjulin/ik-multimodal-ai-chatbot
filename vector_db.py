@@ -5,7 +5,7 @@ Filename: chroma_db.py
 Description: Functions to interact with the chroma vectorstore, initialise it, add documents and 
 search for similar documents.
 Author: @alexdjulin
-Date: 2024-11-01
+Date: 2024-11-04
 """
 
 import chromadb
@@ -253,7 +253,7 @@ def search_collection(query: str, collection_name: str, n_results: int = 3) -> l
     return filtered_results
 
 
-# DATABASE MAINTENANCE FUNCTIONS -------------------------------------------------------------------
+# DATABASE MAINTENANCE FUNCTIONS (NOT REQUIRED TO RUN THE APP) -------------------------------------
 def print_collection_contents(collection_name: str) -> None:
     """Print the contents of a ChromaDB collection.
 

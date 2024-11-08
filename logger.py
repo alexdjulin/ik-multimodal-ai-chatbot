@@ -4,7 +4,7 @@
 Filename: logger.py
 Description: Creates a logger instance with the specified log level, format, and file to use in all modules.
 Author: @alexdjulin
-Date: 2024-07-25
+Date: 2024-11-04
 """
 
 import os
@@ -47,5 +47,12 @@ if config['clear_log']:
 
 
 def get_logger(name: str) -> logging.Logger:
-    ''' Creates child logger inside namespace '''
+    ''' Creates child logger inside namespace
+
+    Args:
+        name (str): name of the logger
+
+    Returns:
+        logging.Logger: logger instance
+    '''
     return logging.getLogger(f'{NAMESPACE}.{name}')

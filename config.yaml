@@ -1,3 +1,5 @@
+### This config file is used to set all the parameters for the AI Librarian chatbot. It is loaded wherever needed in the code using the config_loader.py module.
+
 # USER SETTINGS
 ## How the user should interact with the avatar
 user_name: Alex  # the name of the user as written to Terminal and chat history
