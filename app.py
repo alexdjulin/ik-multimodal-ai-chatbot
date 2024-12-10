@@ -64,10 +64,6 @@ def index():
             chat_history.clear()
             socketio.emit("update_chat", {"chat_history": chat_history})
             return redirect(url_for("index"))
-        # hush chatbot if user types 'hush'
-        elif user_message.lower() == '#hush':
-            return redirect(url_for("index"))
-
         # ignore empty inputs
         if not user_message.strip():
             return redirect(url_for("index"))
