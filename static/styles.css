@@ -20,6 +20,12 @@ body {
     width: 95%;
 }
 
+#chat-form {
+    display: flex; /* Ensure input, buttons, and logo are horizontally aligned */
+    align-items: center; /* Vertically align items within the form */
+    width: 100%; /* Allow the form to span the available width */
+}
+
 .chat-history {
     width: 50%;
     margin-right: 20px;
@@ -45,15 +51,16 @@ body {
     margin-top: 20px;
     display: flex;
     justify-content: flex-start;
-    width: 50%; /* Ensure this matches .chat-history width */
+    align-items: center;
+    width: 95%; /* Ensure this matches .chat-history width */
 }
 
 input[type="text"] {
-    width: 70%; /* leave room for the buttons */
+    width: 47%; /* leave room for the buttons */
     padding: 10px;
     border: none;
     border-radius: 5px;
-    margin-right: 10px;
+    margin-right: 25px;
     border: 1px solid #555;
 }
 
@@ -98,4 +105,10 @@ button#talk-button.active { /* Add active class styling when pressing Talk short
 
 .name-chatbot {
     color: #4CAF50;
+}
+
+#tool-logo {
+    max-height: 35px;
+    object-fit: contain;
+    margin-left: 50px;
 }

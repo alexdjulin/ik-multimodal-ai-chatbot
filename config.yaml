@@ -26,6 +26,8 @@ openai_temperature: 1.5  # the temperature of the model (higher values make the 
 prompt_filepath: prompt.jsonl  # local path to jsonl file with prompts to use for the chatbot
 tools_filepath: tools.py  # local path to python module tools.py defining the tools available to the langchain agent (if used)
 agent_verbose: true  # print agent activity logs
+log_tool_call: true  # log tool calls to file for visual UI feedback
+log_tool_file: logs/tool_calls.log  # local path where the log file will be saved
 
 # ADDITONAL MODELS SETTINGS
 ## We use the following model and settings to summarize documents

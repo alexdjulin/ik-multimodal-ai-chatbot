@@ -82,6 +82,26 @@ def write_to_csv(csvfile: str, *strings: list) -> bool:
     return True
 
 
+def log_tool_call(tool_name: str) -> None:
+    ''' Logs the name of the tool that was called to a file for visual feedback in the UI.
+
+    Args:
+        tool_name (str): Name of the tool that was called
+    '''
+
+    try:
+        # create folder if it doesn't exist
+        log_dir = Path(__file__).parent
+        log_file = log_dir / Path(config['log_filepath'])
+        os.makedirs(log_file.parent, exist_ok=True)
+
+        with open(config['log_tool_file'], "w", encoding='utf-8') as file:
+            file.write(tool_name)
+
+    except (OSError, PermissionError, FileNotFoundError) as e:
+        LOG.error("Error writing to log file: %s", e)
+
+
 def transcribe_audio_file(audio_file_path: str, language: str = None) -> str | None:
     ''' Transcribe an audio file and return text transcription.
 
