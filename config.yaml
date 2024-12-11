@@ -26,11 +26,13 @@ openai_temperature: 1.5  # the temperature of the model (higher values make the 
 prompt_filepath: prompt.jsonl  # local path to jsonl file with prompts to use for the chatbot
 tools_filepath: tools.py  # local path to python module tools.py defining the tools available to the langchain agent (if used)
 agent_verbose: true  # print agent activity logs
+log_tool_call: true  # log tool calls to file for visual UI feedback
+log_tool_file: logs/tool_calls.log  # local path where the log file will be saved
 
 # ADDITONAL MODELS SETTINGS
-## We use the following model and settings to summarize documents
-summarizer_model: gpt-4o-mini  # the model to use for summarization
-relevance_grader_model: gpt-4o-mini  # the model to use for grading relevance
+## We use the following model and settings to summarize and grade documents. Deactivate them for faster inference
+summarizer_model: gpt-4o-mini  # the model to use for summarization, leave blank to skip
+relevance_grader_model: gpt-4o-mini  # the model to use for grading relevance, leave blank to skip
 
 # CHROMADB VECTORSTORE SETTINGS
 chromadb_path: chroma_db/  # local path to the database file

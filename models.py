@@ -139,6 +139,10 @@ def summarizer(context: str, query: str = None) -> str:
     {query}
     """
 
+    # return full context if model not provided
+    if not config.get('summarizer_model', None):
+        return context
+
     prompt = ChatPromptTemplate.from_messages(
         [("system", prompt_text),]
     )
@@ -169,6 +173,11 @@ def relevance_grader(title: str, description: str) -> bool:
         ValueError: if the relevance cannot be determined
     """
 
+    # skip grading and return True if model not provided
+    grader_model = config.get('relevance_grader_model', None)
+    if not grader_model:
+        return True
+
     prompt_text = """
     Given the following youtube video title and descripion, rate the relevance of the video to a
     book review, summary, discussion, analysis or anything related to literature.
@@ -184,7 +193,7 @@ def relevance_grader(title: str, description: str) -> bool:
 
     llm = ChatOpenAI(
         temperature=0,
-        model_name=config['relevance_grader_model'],
+        model_name=grader_model,
         api_key=os.getenv("OPENAI_API_KEY")
     )
 

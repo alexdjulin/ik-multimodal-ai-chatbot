@@ -10,6 +10,7 @@ Date: 2024-11-04
 # Standard library imports
 import os
 import sys
+from pathlib import Path
 from threading import Thread
 
 # Third-party imports
@@ -38,6 +39,7 @@ CHATBOT_NAME = config['chatbot_name']
 app = Flask(__name__)
 socketio = SocketIO(app)
 chat_history = []
+TOOL_CALLS_LOG = Path(__file__).parent / config['log_tool_file']
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -64,10 +66,6 @@ def index():
             chat_history.clear()
             socketio.emit("update_chat", {"chat_history": chat_history})
             return redirect(url_for("index"))
-        # hush chatbot if user types 'hush'
-        elif user_message.lower() == '#hush':
-            return redirect(url_for("index"))
-
         # ignore empty inputs
         if not user_message.strip():
             return redirect(url_for("index"))
@@ -166,6 +164,11 @@ def process_audio_answer(user_message: str) -> None:
         if audio_path:
             socketio.emit("new_audio_response", {"audio_path": audio_path})
 
+    # Empty tool call log to remove logo from UI
+    if config.get('log_tool_call', False) and os.path.isfile(TOOL_CALLS_LOG):
+        with open(TOOL_CALLS_LOG, "w"):
+            pass
+
 
 @app.route('/delete_audio', methods=['POST'])
 def delete_audio():
@@ -182,6 +185,41 @@ def delete_audio():
         except Exception as e:
             return jsonify({"status": "error", "message": f"Failed to delete audio file: {e}"})
     return jsonify({"status": "error", "message": "Invalid or missing audio path."}), 400
+
+
+@app.route('/log_tool_call', methods=['GET'])
+def log_toll_call():
+    """Endpoint to display the current tool call logged to file on the UI.
+
+    Returns:
+        jsonify: JSON tool call.
+    """
+
+    tool_call = ""
+    img_base_url = config.get('image_base_url', '/static/tool_imgs/')
+
+    # Define image mapping for each tool call
+    tool_call_imgs = {
+        "search_wikipedia": "tool_wikipedia.png",
+        "search_database_for_book_information": "tool_chroma.png",
+        "search_database_for_book_reviews": "tool_chroma.png",
+        "YoutubeSearchTool": "tool_youtube.png",
+        "retrieve_youtube_transcript_from_url": "tool_youtube.png",
+        "get_information_about_yourself": "tool_alice.png",
+    }
+
+    if config.get('log_tool_call', False):
+        try:
+            with open(TOOL_CALLS_LOG, "r") as file:
+                tool_call = file.read().strip()
+        except FileNotFoundError:
+            tool_call = ""
+
+    # Map tool call to image filename
+    img_filename = tool_call_imgs.get(tool_call, "")
+    image_path = img_base_url + img_filename if img_filename else ""
+
+    return jsonify({"image_path": image_path})
 
 
 if __name__ == "__main__":

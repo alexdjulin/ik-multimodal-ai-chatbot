@@ -12,6 +12,7 @@ Date: 2024-11-04
 import os
 import re
 import json
+import inspect
 import html
 from pathlib import Path
 from pydantic import Field
@@ -25,6 +26,7 @@ from googleapiclient.discovery import build
 from youtube_transcript_api import YouTubeTranscriptApi
 # custom modules
 import models
+import helpers
 import vector_db
 # config loader
 from config_loader import get_config
@@ -34,6 +36,11 @@ LOG = get_logger(Path(__file__).stem)
 
 # get config dict
 config = get_config()
+
+# delete tool call log if exists
+log_file_path = Path(__file__).parent / config['log_tool_file']
+if log_file_path.exists():
+    log_file_path.unlink()
 
 
 # Wikipedia ----------------------------------------------------------------------------------------
@@ -46,6 +53,11 @@ def search_wikipedia(query: str) -> str:
     Returns:
         str: The summary of the Wikipedia page with relevant information.
     """
+
+    # log tool call
+    tool_name = inspect.currentframe().f_code.co_name
+    helpers.log_tool_call(tool_name)
+    LOG.debug(f"Tool call: {tool_name}")
 
     api_wrapper = WikipediaAPIWrapper(
         top_k_results=1,
@@ -270,7 +282,10 @@ class YoutubeSearchTool(BaseTool):
             str: The search results in JSON format.
         """
 
-        LOG.debug("Tool call: YoutubeSearchTool")
+        # log tool call
+        tool_name = self.__class__.__name__
+        helpers.log_tool_call(tool_name)
+        LOG.debug(f"Tool call: {tool_name}")
 
         # search for videos
         search_response = search_youtube(query, max_results)
@@ -351,7 +366,10 @@ def retrieve_youtube_transcript_from_url(youtube_url: str) -> str:
         Exception: If an error occurs while retrieving the transcript.
     """
 
-    LOG.debug("Tool call: retrieve_youtube_transcript_from_url")
+    # log tool call
+    tool_name = inspect.currentframe().f_code.co_name
+    helpers.log_tool_call(tool_name)
+    LOG.debug(f"Tool call: {tool_name}")
 
     # get video metadata
     video = search_youtube(get_videoid_from_url(youtube_url), max_results=1)
@@ -406,7 +424,12 @@ def search_database_for_book_information(query_text: str) -> list:
     Returns:
         list: A list of results from the database.
     """
-    LOG.debug("Tool call: search_database_for_book_information")
+
+    # log tool call
+    tool_name = inspect.currentframe().f_code.co_name
+    helpers.log_tool_call(tool_name)
+    LOG.debug(f"Tool call: {tool_name}")
+
     return vector_db.search_collection(query_text, collection_name="book_info")
 
 
@@ -420,7 +443,12 @@ def search_database_for_book_reviews(query_text: str) -> list:
     Returns:
         list: A list of results from the database.
     """
-    LOG.debug("Tool call: search_database_for_book_reviews")
+
+    # log tool call
+    tool_name = inspect.currentframe().f_code.co_name
+    helpers.log_tool_call(tool_name)
+    LOG.debug(f"Tool call: {tool_name}")
+
     return vector_db.search_collection(query_text, collection_name="book_reviews")
 
 
@@ -429,7 +457,10 @@ def search_database_for_book_reviews(query_text: str) -> list:
 def get_information_about_yourself() -> None:
     """Get a list of information about yourself (Alice the kind and helpful librarian)."""
 
-    LOG.debug("Tool call: get_information_about_yourself")
+    # log tool call
+    tool_name = inspect.currentframe().f_code.co_name
+    helpers.log_tool_call(tool_name)
+    LOG.debug(f"Tool call: {tool_name}")
 
     info = [
         "Your name is Alice, like the character from 'Alice in Wonderland' by Lewis Carroll. You \

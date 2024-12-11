@@ -119,3 +119,24 @@ document.addEventListener('keyup', function(event) {
         talkButton.classList.remove('active'); // Release active class (red color)
     }
 });
+
+// Check for tool calls to display logo
+document.addEventListener('DOMContentLoaded', function () {
+    const toolLogo = document.getElementById('tool-logo');
+
+    // Poll the server every second for the current tool's logo
+    setInterval(() => {
+        fetch('/log_tool_call')
+            .then(response => response.json())
+            .then(data => updateToolLogo(data.image_path));
+    }, 1000);
+
+    function updateToolLogo(image_path) {
+        if (image_path) {
+            toolLogo.src = image_path;          // Set the image source to the returned path
+            toolLogo.style.display = "block"; // Show the image
+        } else {
+            toolLogo.style.display = "none";  // Hide the image if no path is provided
+        }
+    }
+});
