@@ -31,8 +31,8 @@ log_tool_file: logs/tool_calls.log  # local path where the log file will be save
 
 # ADDITONAL MODELS SETTINGS
 ## We use the following model and settings to summarize and grade documents. Deactivate them for faster inference
-summarizer_model: # gpt-4o-mini  # the model to use for summarization, leave blank to skip
-relevance_grader_model: # gpt-4o-mini  # the model to use for grading relevance, leave blank to skip
+summarizer_model: gpt-4o-mini  # the model to use for summarization, leave blank to skip
+relevance_grader_model: gpt-4o-mini  # the model to use for grading relevance, leave blank to skip
 
 # CHROMADB VECTORSTORE SETTINGS
 chromadb_path: chroma_db/  # local path to the database file
